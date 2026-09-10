@@ -1,0 +1,148 @@
+<!-- =============================================================
+     TURFWAR — AndroidManifest.xml additions
+     
+     In Sketchware Pro: Project → More → Permission (for uses-permission)
+     Components (service, receiver, provider) must be added via the
+     "Library" or custom manifest editor if your version supports it.
+     If not, export APK and edit AndroidManifest.xml manually.
+============================================================= -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     PERMISSIONS  (add each in Sketchware → Permission section)
+═══════════════════════════════════════════════════════════ -->
+
+<!-- Internet access (Firebase + map tiles + Turf CDN) -->
+<uses-permission android:name="android.permission.INTERNET"/>
+
+<!-- GPS — precise location for territory tracking -->
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
+<!-- Background location for steal checking (Android 10+) -->
+<uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
+
+<!-- Foreground service (required for LocationCheckService) -->
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
+
+<!-- Receive boot completed to restart alarm after reboot -->
+<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+
+<!-- Vibration feedback on territory claim -->
+<uses-permission android:name="android.permission.VIBRATE"/>
+
+<!-- Keep CPU alive while alarm fires -->
+<uses-permission android:name="android.permission.WAKE_LOCK"/>
+
+<!-- Push notifications (Android 13+ / API 33+) -->
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
+<!-- Battery optimization exemption request -->
+<uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
+
+<!--
+  Save share-card images to gallery on Android 9 and below.
+  maxSdkVersion=28 means this permission is NOT requested at all
+  on Android 10+ (API 29+), since MediaStore handles it there
+  without needing any permission. Your Vivo Y12 is Android 9
+  (API 28) so it DOES need this one.
+-->
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+    android:maxSdkVersion="28"/>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     COMPONENTS  (add inside <application> tag in manifest)
+═══════════════════════════════════════════════════════════ -->
+
+<!--
+  Background steal-check service.
+-->
+<service
+    android:name=".LocationCheckService"
+    android:enabled="true"
+    android:exported="false"
+    android:foregroundServiceType="dataSync"/>
+
+<!--
+  AlarmReceiver — woken by AlarmManager + on device boot.
+-->
+<receiver
+    android:name=".AlarmReceiver"
+    android:enabled="true"
+    android:exported="false">
+    <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED"/>
+    </intent-filter>
+</receiver>
+
+<!--
+  FileProvider — required for the "Share" button on the
+  territory claim card to work. Without this, Android throws
+  FileUriExposedException when trying to share the image.
+
+  IMPORTANT: authorities MUST exactly match your package name
+  + ".fileprovider" — since your package is com.rohit.turfwar,
+  this is already correct below. Do not change it unless your
+  package name changes too.
+
+  Also requires: res/xml/file_paths.xml (see file_paths.xml —
+  create this via Sketchware Pro → Resource → XML)
+-->
+<provider
+    android:name="androidx.core.content.FileProvider"
+    android:authorities="com.rohit.turfwar.fileprovider"
+    android:exported="false"
+    android:grantUriPermissions="true">
+    <meta-data
+        android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/file_paths"/>
+</provider>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     ACTIVITY SETTINGS for MainActivity
+═══════════════════════════════════════════════════════════ -->
+<!--
+<activity
+    android:name=".MainActivity"
+    android:configChanges="orientation|screenSize|keyboardHidden"
+    android:exported="true"
+    android:hardwareAccelerated="true"
+    android:windowSoftInputMode="adjustResize">
+    <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+    </intent-filter>
+</activity>
+-->
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     FIRESTORE SECURITY RULES
+     Paste in Firebase Console → Firestore → Rules tab
+═══════════════════════════════════════════════════════════ -->
+<!--
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /territories/{doc} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null;
+    }
+
+    match /users/{uid} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /steals/{doc} {
+      allow read:   if true;
+      allow create: if request.auth != null;
+      allow update: if true;
+    }
+  }
+}
+-->

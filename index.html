@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Password Memory Challenge</title>
+  <style>
+/* ─────────────────────────────────────────────
+   RESET & BASE
+───────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --blue:        #2563EB;
+  --blue-hover:  #1D4ED8;
+  --blue-light:  #EFF6FF;
+  --black:       #0F0F0F;
+  --gray-1:      #6B7280;
+  --gray-2:      #E5E7EB;
+  --gray-3:      #F9FAFB;
+  --white:       #FFFFFF;
+  --green:       #22C55E;
+  --red:         #EF4444;
+  --font-display: 'Georgia', 'Times New Roman', serif;
+  --font-body:    system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ease-out:  cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast:  180ms;
+  --dur-mid:   320ms;
+  --dur-slow:  500ms;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--white);
+  color: var(--black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── SCREEN TRANSITIONS ─── */
+.screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(24px);
+  transition:
+    opacity var(--dur-slow) var(--ease-out),
+    transform var(--dur-slow) var(--ease-out);
+  will-change: opacity, transform;
+}
+.screen.active {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateY(0);
+}
+.screen.exit {
+  opacity: 0;
+  transform: translateY(-20px);
+  transition:
+    opacity var(--dur-mid) ease-in,
+    transform var(--dur-mid) ease-in;
+}
+
+/* ─── CARD ─── */
+.card {
+  background: var(--white);
+  border: 1px solid var(--gray-2);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 1px 3px rgba(0,0,0,.06),
+    0 8px 32px rgba(0,0,0,.08);
+  padding: 40px 36px;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+@media (max-width: 480px) {
+  .card { padding: 28px 20px; gap: 16px; }
+}
+
+/* ─── LOGO / EMOJI ─── */
+.logo-mark {
+  font-size: 3rem;
+  line-height: 1;
+  text-align: center;
+  animation: pop var(--dur-slow) var(--ease-back) both;
+}
+.logo-mark.small { font-size: 2.2rem; }
+
+@keyframes pop {
+  from { transform: scale(0.6); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+/* ─── TYPOGRAPHY ─── */
+.headline {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 6vw, 2.6rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-align: center;
+  color: var(--black);
+}
+.headline.small { font-size: clamp(1.4rem, 4vw, 1.8rem); }
+
+.sub {
+  font-size: 0.9rem;
+  color: var(--gray-1);
+  text-align: center;
+  line-height: 1.55;
+}
+.section-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gray-1);
+  text-align: center;
+}
+.greeting {
+  font-size: 0.9rem;
+  color: var(--gray-1);
+  text-align: center;
+}
+.accent-name { color: var(--blue); font-weight: 700; }
+.memorize-hint {
+  font-size: 0.82rem;
+  color: var(--gray-1);
+  text-align: center;
+}
+.timer-label {
+  font-size: 0.75rem;
+  color: var(--gray-1);
+  text-align: center;
+  margin-top: -10px;
+  letter-spacing: 0.04em;
+}
+
+/* ─── FORM FIELDS ─── */
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field-group label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--black);
+  letter-spacing: 0.01em;
+}
+.field-group input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 1rem;
+  font-family: var(--font-body);
+  color: var(--black);
+  background: var(--gray-3);
+  border: 1.5px solid var(--gray-2);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition:
+    border-color var(--dur-fast) ease,
+    box-shadow   var(--dur-fast) ease,
+    background   var(--dur-fast) ease;
+  -webkit-appearance: none;
+}
+.field-group input:focus {
+  background: var(--white);
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+}
+.field-group input.readonly-field {
+  color: var(--gray-1);
+  cursor: default;
+  user-select: none;
+}
+#login-password {
+  font-family: 'Courier New', monospace;
+  font-size: 1.1rem;
+  letter-spacing: 0.08em;
+}
+
+/* ─── BUTTONS ─── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 22px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: var(--font-body);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) ease,
+    transform  var(--dur-fast) var(--ease-back),
+    box-shadow var(--dur-fast) ease;
+  -webkit-appearance: none;
+  user-select: none;
+}
+.btn-primary {
+  background: var(--blue);
+  color: var(--white);
+  box-shadow: 0 2px 8px rgba(37,99,235,.25);
+}
+.btn-primary:hover {
+  background: var(--blue-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(37,99,235,.35);
+}
+.btn-primary:active {
+  transform: translateY(0px) scale(0.98);
+  box-shadow: 0 1px 4px rgba(37,99,235,.2);
+}
+.btn-full { width: 100%; }
+.btn-arrow {
+  display: inline-block;
+  transition: transform var(--dur-fast) var(--ease-back);
+}
+.btn:hover .btn-arrow { transform: translateX(4px); }
+
+/* ─── ERROR ─── */
+.error-msg {
+  font-size: 0.82rem;
+  color: var(--red);
+  text-align: center;
+  font-weight: 500;
+}
+.error-msg.hidden { display: none; }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  15%       { transform: translateX(-8px); }
+  30%       { transform: translateX(7px); }
+  45%       { transform: translateX(-6px); }
+  60%       { transform: translateX(5px); }
+  75%       { transform: translateX(-3px); }
+  90%       { transform: translateX(2px); }
+}
+.shake { animation: shake 0.5s var(--ease-out) both; }
+
+/* ─── PASSWORD DISPLAY BOX ─── */
+.password-box {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  background: var(--blue-light);
+  border: 1.5px solid rgba(37,99,235,.2);
+  border-radius: var(--radius-md);
+  padding: 18px 12px;
+}
+.pwd-char {
+  font-family: 'Courier New', monospace;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--blue);
+  background: var(--white);
+  border-radius: 8px;
+  width: 38px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 4px rgba(37,99,235,.12);
+  animation: charPop 0.4s var(--ease-back) both;
+}
+@keyframes charPop {
+  from { transform: scale(0.5) translateY(8px); opacity: 0; }
+  to   { transform: scale(1)   translateY(0);   opacity: 1; }
+}
+
+/* ─── COUNTDOWN RING ─── */
+.timer-wrap {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  margin: 0 auto;
+}
+.timer-ring {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.ring-track {
+  fill: none;
+  stroke: var(--gray-2);
+  stroke-width: 8;
+}
+.ring-progress {
+  fill: none;
+  stroke: var(--blue);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 314.16;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1s linear, stroke 0.4s ease;
+  will-change: stroke-dashoffset;
+}
+.ring-progress.urgent { stroke: var(--red); }
+.timer-number {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--black);
+  letter-spacing: -0.03em;
+  transition: color 0.4s ease;
+}
+.timer-number.urgent { color: var(--red); }
+
+@keyframes pulse-urgent {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.12); }
+}
+.timer-number.pulsing {
+  animation: pulse-urgent 0.6s ease-in-out infinite;
+}
+
+/* ─── CHAR INDICATORS ─── */
+.char-indicators {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.char-dot {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--gray-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  line-height: 1;
+  transition:
+    background var(--dur-mid) var(--ease-back),
+    transform  var(--dur-mid) var(--ease-back);
+}
+.char-dot.correct {
+  background: rgba(34,197,94,.15);
+  transform: scale(1.1);
+  animation: dotBounce var(--dur-mid) var(--ease-back);
+}
+.char-dot.wrong {
+  background: rgba(239,68,68,.12);
+  animation: dotShake 0.35s var(--ease-out);
+}
+.char-dot.empty { background: var(--gray-2); transform: scale(1); }
+
+@keyframes dotBounce {
+  0%   { transform: scale(0.7); }
+  60%  { transform: scale(1.2); }
+  100% { transform: scale(1.1); }
+}
+@keyframes dotShake {
+  0%, 100% { transform: translateX(0); }
+  25%       { transform: translateX(-4px); }
+  75%       { transform: translateX(4px); }
+}
+
+/* ─── SUCCESS ─── */
+#screen-success { z-index: 10; }
+
+#confetti-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9;
+}
+.success-card {
+  text-align: center;
+  z-index: 11;
+  position: relative;
+}
+.success-emoji {
+  font-size: 4rem;
+  line-height: 1;
+  animation: pop 0.6s var(--ease-back) 0.1s both;
+}
+.success-headline {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 5vw, 2.4rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--black);
+  animation: fadeUp 0.5s var(--ease-out) 0.25s both;
+}
+.success-sub {
+  font-size: 1rem;
+  color: var(--gray-1);
+  animation: fadeUp 0.5s var(--ease-out) 0.35s both;
+}
+.success-detail {
+  font-size: 0.84rem;
+  color: var(--gray-1);
+  animation: fadeUp 0.5s var(--ease-out) 0.45s both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 380px) {
+  .pwd-char { font-size: 1.3rem; width: 32px; height: 40px; }
+  .char-dot { width: 30px; height: 30px; font-size: 0.95rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+  </style>
+</head>
+<body>
+
+  <!-- SCREEN 1 — USERNAME -->
+  <div id="screen-username" class="screen active">
+    <div class="card">
+      <div class="logo-mark">🧠</div>
+      <h1 class="headline">Memory<br>Challenge</h1>
+      <p class="sub">How good is your memory? We'll generate a password — you memorize it, then type it back.</p>
+      <div class="field-group">
+        <label for="username-input">Choose a username</label>
+        <input id="username-input" type="text" placeholder="e.g. alex42"
+          autocomplete="off" spellcheck="false" maxlength="24" />
+      </div>
+      <button id="btn-generate" class="btn btn-primary btn-full">
+        Generate Password <span class="btn-arrow">→</span>
+      </button>
+      <p id="username-error" class="error-msg hidden">Please enter a username first.</p>
+    </div>
+  </div>
+
+  <!-- SCREEN 2 — MEMORIZE -->
+  <div id="screen-memorize" class="screen">
+    <div class="card">
+      <div class="greeting">Good luck, <span id="memorize-username" class="accent-name"></span>!</div>
+      <h2 class="section-label">Your Password</h2>
+      <div id="password-display" class="password-box"></div>
+      <p class="memorize-hint">Memorize this before the timer runs out.</p>
+      <div class="timer-wrap">
+        <svg class="timer-ring" viewBox="0 0 120 120">
+          <circle class="ring-track" cx="60" cy="60" r="50" />
+          <circle id="ring-progress" class="ring-progress" cx="60" cy="60" r="50" />
+        </svg>
+        <div id="timer-number" class="timer-number">10</div>
+      </div>
+      <p class="timer-label">seconds remaining</p>
+    </div>
+  </div>
+
+  <!-- SCREEN 3 — LOGIN -->
+  <div id="screen-login" class="screen">
+    <div class="card">
+      <div class="logo-mark small">🔐</div>
+      <h2 class="headline small">Now sign in</h2>
+      <p class="sub">Type the password you just memorized.</p>
+      <div class="field-group">
+        <label for="login-username">Username</label>
+        <input id="login-username" type="text" readonly class="readonly-field" tabindex="-1" />
+      </div>
+      <div class="field-group">
+        <label for="login-password">Password</label>
+        <input id="login-password" type="text" placeholder="Type your password…"
+          autocomplete="off" autocorrect="off" autocapitalize="none"
+          spellcheck="false" maxlength="8" />
+      </div>
+      <div id="char-indicators" class="char-indicators"
+        aria-live="polite" aria-label="Password match indicators"></div>
+      <p id="login-error" class="error-msg hidden">Incorrect password — keep trying!</p>
+      <button id="btn-login" class="btn btn-primary btn-full">Sign In</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 4 — SUCCESS -->
+  <div id="screen-success" class="screen">
+    <canvas id="confetti-canvas"></canvas>
+    <div class="card success-card">
+      <div class="success-emoji">🎉</div>
+      <h2 class="success-headline">You nailed it!</h2>
+      <p class="success-sub">Wow — you have a <strong>great mind</strong>.</p>
+      <p class="success-detail">Not everyone can memorize a random 8-character password in 10 seconds.</p>
+      <button id="btn-play-again" class="btn btn-primary btn-full">Play Again</button>
+    </div>
+  </div>
+
+  <script>
+'use strict';
+
+/* ─── State ─── */
+const state = { username: '', password: '', timerID: null, remaining: 10 };
+
+/* ─── DOM ─── */
+const screens = {
+  username: document.getElementById('screen-username'),
+  memorize: document.getElementById('screen-memorize'),
+  login:    document.getElementById('screen-login'),
+  success:  document.getElementById('screen-success'),
+};
+
+const usernameInput   = document.getElementById('username-input');
+const usernameError   = document.getElementById('username-error');
+const btnGenerate     = document.getElementById('btn-generate');
+const memorizeUname   = document.getElementById('memorize-username');
+const passwordDisplay = document.getElementById('password-display');
+const timerNumber     = document.getElementById('timer-number');
+const ringProgress    = document.getElementById('ring-progress');
+const loginUsername   = document.getElementById('login-username');
+const loginPassword   = document.getElementById('login-password');
+const loginError      = document.getElementById('login-error');
+const charIndicators  = document.getElementById('char-indicators');
+const btnLogin        = document.getElementById('btn-login');
+const btnPlayAgain    = document.getElementById('btn-play-again');
+const confettiCanvas  = document.getElementById('confetti-canvas');
+
+const CIRCUMFERENCE = 314.16; // 2π × r50
+
+/* ─── Helpers ─── */
+function generatePassword() {
+  const upper  = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const lower  = 'abcdefghjkmnpqrstuvwxyz';
+  const digits = '23456789';
+  const all    = upper + lower + digits;
+  const pick   = s => s[Math.floor(Math.random() * s.length)];
+  const chars  = [pick(upper), pick(lower), pick(digits)];
+  while (chars.length < 8) chars.push(pick(all));
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  return chars.join('');
+}
+
+function goTo(to) {
+  const current = Object.values(screens).find(s => s.classList.contains('active'));
+  if (current) {
+    current.classList.add('exit');
+    current.classList.remove('active');
+    setTimeout(() => current.classList.remove('exit'), 350);
+  }
+  setTimeout(() => screens[to].classList.add('active'), current ? 280 : 0);
+}
+
+function showError(el, msg) {
+  el.textContent = msg;
+  el.classList.remove('hidden', 'shake');
+  void el.offsetWidth;
+  el.classList.add('shake');
+}
+
+function hideError(el) { el.classList.add('hidden'); }
+
+/* ─── Screen 1: Username ─── */
+btnGenerate.addEventListener('click', handleGenerate);
+usernameInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleGenerate(); });
+usernameInput.addEventListener('input', () => hideError(usernameError));
+
+function handleGenerate() {
+  const raw = usernameInput.value.trim();
+  if (!raw) { showError(usernameError, 'Please enter a username first.'); usernameInput.focus(); return; }
+  state.username = raw;
+  state.password = generatePassword();
+  try { localStorage.setItem('pmc_username', state.username); localStorage.setItem('pmc_password', state.password); } catch (_) {}
+  setupMemorizeScreen();
+  goTo('memorize');
+}
+
+/* ─── Screen 2: Memorize ─── */
+function setupMemorizeScreen() {
+  memorizeUname.textContent = state.username;
+  passwordDisplay.innerHTML = '';
+  [...state.password].forEach((ch, i) => {
+    const span = document.createElement('span');
+    span.className = 'pwd-char';
+    span.textContent = ch;
+    span.style.animationDelay = `${i * 60}ms`;
+    passwordDisplay.appendChild(span);
+  });
+  state.remaining = 10;
+  updateTimerUI(10);
+  timerNumber.classList.remove('urgent', 'pulsing');
+  ringProgress.classList.remove('urgent');
+  if (state.timerID) clearInterval(state.timerID);
+  setTimeout(() => { state.timerID = setInterval(tickTimer, 1000); }, 800);
+}
+
+function tickTimer() {
+  state.remaining -= 1;
+  updateTimerUI(state.remaining);
+  if (state.remaining <= 3) {
+    timerNumber.classList.add('urgent', 'pulsing');
+    ringProgress.classList.add('urgent');
+  }
+  if (state.remaining <= 0) {
+    clearInterval(state.timerID);
+    state.timerID = null;
+    transitionToLogin();
+  }
+}
+
+function updateTimerUI(s) {
+  timerNumber.textContent = s;
+  ringProgress.style.strokeDashoffset = CIRCUMFERENCE * (1 - s / 10);
+}
+
+function transitionToLogin() { setupLoginScreen(); goTo('login'); }
+
+/* ─── Screen 3: Login ─── */
+function setupLoginScreen() {
+  loginUsername.value = state.username;
+  loginPassword.value = '';
+  hideError(loginError);
+  renderIndicators('');
+  setTimeout(() => loginPassword.focus(), 450);
+}
+
+loginPassword.addEventListener('input', () => {
+  hideError(loginError);
+  renderIndicators(loginPassword.value);
+});
+
+function renderIndicators(typed) {
+  charIndicators.innerHTML = '';
+  for (let i = 0; i < 8; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'char-dot';
+    if (i < typed.length) {
+      const ok = typed[i] === state.password[i];
+      dot.classList.add(ok ? 'correct' : 'wrong');
+      dot.textContent = ok ? '✅' : '❌';
+      dot.setAttribute('aria-label', ok ? 'correct' : 'wrong');
+    } else {
+      dot.classList.add('empty');
+      dot.setAttribute('aria-label', 'empty');
+    }
+    charIndicators.appendChild(dot);
+  }
+}
+
+loginPassword.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+btnLogin.addEventListener('click', handleLogin);
+
+function handleLogin() {
+  const typed = loginPassword.value;
+  if (!typed.length) { showError(loginError, 'Type your password to continue.'); loginPassword.focus(); return; }
+  if (typed === state.password) {
+    goTo('success');
+    startConfetti();
+  } else {
+    showError(loginError, 'Incorrect password — keep trying!');
+    loginPassword.style.borderColor = '#EF4444';
+    loginPassword.style.boxShadow   = '0 0 0 3px rgba(239,68,68,.15)';
+    setTimeout(() => { loginPassword.style.borderColor = ''; loginPassword.style.boxShadow = ''; }, 600);
+    loginPassword.focus();
+  }
+}
+
+/* ─── Screen 4: Success + Confetti ─── */
+let confettiAnimID = null, confettiParticles = [];
+
+function startConfetti() {
+  const ctx = confettiCanvas.getContext('2d');
+  confettiCanvas.width  = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+  const COLORS = ['#2563EB','#22C55E','#EF4444','#F59E0B','#A855F7','#EC4899'];
+  confettiParticles = Array.from({ length: 140 }, () => ({
+    x: Math.random() * confettiCanvas.width,
+    y: Math.random() * -confettiCanvas.height * 0.5,
+    vx: (Math.random() - 0.5) * 2.5,
+    vy: Math.random() * 3 + 2,
+    angle: Math.random() * Math.PI * 2,
+    spin:  (Math.random() - 0.5) * 0.18,
+    w:     Math.random() * 10 + 5,
+    h:     Math.random() * 6  + 4,
+    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    alpha: 1,
+  }));
+  if (confettiAnimID) cancelAnimationFrame(confettiAnimID);
+  (function frame() {
+    ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    let alive = false;
+    confettiParticles.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.angle += p.spin; p.vy += 0.04;
+      if (p.y > confettiCanvas.height * 0.75) p.alpha = Math.max(0, p.alpha - 0.018);
+      if (p.alpha > 0) alive = true;
+      ctx.save();
+      ctx.globalAlpha = p.alpha;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    });
+    if (alive) { confettiAnimID = requestAnimationFrame(frame); }
+    else ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  })();
+}
+
+function stopConfetti() {
+  if (confettiAnimID) { cancelAnimationFrame(confettiAnimID); confettiAnimID = null; }
+  confettiCanvas.getContext('2d').clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  confettiParticles = [];
+}
+
+btnPlayAgain.addEventListener('click', () => { stopConfetti(); resetGame(); goTo('username'); });
+
+function resetGame() {
+  state.username = ''; state.password = ''; state.remaining = 10;
+  if (state.timerID) { clearInterval(state.timerID); state.timerID = null; }
+  usernameInput.value = ''; loginPassword.value = '';
+  charIndicators.innerHTML = '';
+  hideError(usernameError); hideError(loginError);
+  try { localStorage.removeItem('pmc_username'); localStorage.removeItem('pmc_password'); } catch (_) {}
+}
+
+/* ─── History Lock ─── */
+history.pushState({ page: 'app' }, '');
+window.addEventListener('popstate', () => {
+  history.pushState({ page: 'app' }, '');
+  if (screens.memorize.classList.contains('active')) {
+    clearInterval(state.timerID);
+    transitionToLogin();
+  } else if (!screens.login.classList.contains('active')) {
+    resetGame(); goTo('username');
+  }
+});
+
+/* ─── Canvas Resize ─── */
+window.addEventListener('resize', () => {
+  if (screens.success.classList.contains('active')) {
+    confettiCanvas.width  = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+  }
+});
+
+/* ─── Init ─── */
+(function init() {
+  try {
+    const u = localStorage.getItem('pmc_username');
+    const p = localStorage.getItem('pmc_password');
+    if (u && p) {
+      state.username = u; state.password = p;
+      setupLoginScreen(); goTo('login'); return;
+    }
+  } catch (_) {}
+})();
+  </script>
+</body>
+</html>
