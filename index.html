@@ -1,786 +1,3299 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Password Memory Challenge</title>
-  <style>
-/* ─────────────────────────────────────────────
-   RESET & BASE
-───────────────────────────────────────────── */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>TurfWar</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+/* ============================================================
+   RESET
+============================================================ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;-webkit-tap-highlight-color:transparent}
+::-webkit-scrollbar{display:none}
+input,button{outline:none;font-family:inherit}
+
+/* ============================================================
+   DESIGN TOKENS  — NRC/Strava Premium Dark
+============================================================ */
+:root{
+  --bg:     #090909;
+  --bg2:    #111111;
+  --bg3:    #1A1A1A;
+  --line:   #222222;
+  --line2:  #2C2C2C;
+  --lime:   #C5F135;
+  --lime-d: #9EC010;
+  --white:  #FFFFFF;
+  --g1:     #AAAAAA;
+  --g2:     #555555;
+  --g3:     #333333;
+  --red:    #FF3B30;
+  --r:      10px;
+  --r-lg:   16px;
+  --nav:    60px;
+  --font:   -apple-system,'SF Pro Display','Helvetica Neue',sans-serif;
 }
 
-:root {
-  --blue:        #2563EB;
-  --blue-hover:  #1D4ED8;
-  --blue-light:  #EFF6FF;
-  --black:       #0F0F0F;
-  --gray-1:      #6B7280;
-  --gray-2:      #E5E7EB;
-  --gray-3:      #F9FAFB;
-  --white:       #FFFFFF;
-  --green:       #22C55E;
-  --red:         #EF4444;
-  --font-display: 'Georgia', 'Times New Roman', serif;
-  --font-body:    system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --ease-out:  cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-back: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --dur-fast:  180ms;
-  --dur-mid:   320ms;
-  --dur-slow:  500ms;
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--white);
 }
 
-html, body {
-  height: 100%;
-  overflow: hidden;
+/* ============================================================
+   SCREENS
+============================================================ */
+.screen{
+  position:fixed;inset:0;
+  display:none;flex-direction:column;
+  background:var(--bg);
+  overflow:hidden;
+  /* FIX 2: Explicit height ensures flex children fill screen in Android WebView */
+  height:100%;
+  width:100%;
+}
+.screen.active{display:flex}
+#screen-map.active{display:block}
+
+/* ============================================================
+   SPLASH
+============================================================ */
+#splash{
+  position:fixed;inset:0;z-index:9999;
+  background:var(--bg);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:10px;transition:opacity 0.5s;
+}
+#splash.gone{opacity:0;pointer-events:none}
+.splash-mark{
+  width:70px;height:70px;border-radius:16px;
+  background:var(--lime);
+  display:flex;align-items:center;justify-content:center;
+  animation:spl 1.8s ease-in-out infinite;
+}
+.splash-mark svg{color:var(--bg)}
+@keyframes spl{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+
+/* ============================================================
+   TOAST
+============================================================ */
+#toast{
+  position:fixed;bottom:76px;left:50%;transform:translateX(-50%);
+  background:var(--bg3);color:var(--white);border:1px solid var(--line2);
+  font-size:13px;font-weight:600;
+  padding:10px 18px;border-radius:24px;
+  z-index:7000;opacity:0;transition:opacity 0.22s;
+  pointer-events:none;white-space:nowrap;max-width:80vw;
+  overflow:hidden;text-overflow:ellipsis;
+}
+#toast.on{opacity:1}
+
+/* ============================================================
+   AUTH SCREEN
+============================================================ */
+#screen-auth{
+  background:var(--bg);
+  align-items:center;justify-content:center;padding:32px 24px;
+}
+.auth-wrap{width:100%;max-width:380px}
+
+.auth-brand{
+  text-align:center;margin-bottom:40px;
+}
+.auth-logo{
+  width:60px;height:60px;border-radius:14px;
+  background:var(--lime);
+  display:inline-flex;align-items:center;justify-content:center;
+  margin-bottom:14px;
+}
+.auth-logo svg{color:var(--bg)}
+.auth-title{
+  font-size:28px;font-weight:900;
+  letter-spacing:-0.5px;color:var(--white);
+}
+.auth-sub{font-size:12px;color:var(--g2);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+
+/* Google button */
+.btn-google{
+  width:100%;background:var(--bg3);border:1px solid var(--line2);
+  color:var(--white);font-size:15px;font-weight:600;
+  border-radius:var(--r);padding:15px;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  cursor:pointer;transition:background 0.15s;margin-bottom:20px;
+}
+.btn-google:active{background:var(--line)}
+
+/* Divider */
+.auth-divider{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:20px;color:var(--g2);font-size:12px;
+}
+.auth-divider::before,.auth-divider::after{
+  content:'';flex:1;height:1px;background:var(--line);
 }
 
-body {
-  font-family: var(--font-body);
-  background: var(--white);
-  color: var(--black);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 16px;
-  -webkit-font-smoothing: antialiased;
+/* Input fields */
+.field-wrap{
+  position:relative;margin-bottom:12px;
+}
+.field-icon{
+  position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  color:var(--g2);pointer-events:none;
+  display:flex;align-items:center;
+}
+.field-input{
+  width:100%;background:var(--bg3);border:1px solid var(--line2);
+  color:var(--white);font-size:15px;
+  border-radius:var(--r);padding:14px 14px 14px 44px;
+  transition:border-color 0.2s;
+}
+.field-input:focus{border-color:var(--lime)}
+.field-input::placeholder{color:var(--g2)}
+.field-toggle{
+  position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  color:var(--g2);cursor:pointer;
+  display:flex;align-items:center;padding:4px;
 }
 
-/* ─── SCREEN TRANSITIONS ─── */
-.screen {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(24px);
-  transition:
-    opacity var(--dur-slow) var(--ease-out),
-    transform var(--dur-slow) var(--ease-out);
-  will-change: opacity, transform;
-}
-.screen.active {
-  opacity: 1;
-  pointer-events: all;
-  transform: translateY(0);
-}
-.screen.exit {
-  opacity: 0;
-  transform: translateY(-20px);
-  transition:
-    opacity var(--dur-mid) ease-in,
-    transform var(--dur-mid) ease-in;
+.auth-forgot{
+  text-align:right;font-size:12px;color:var(--lime);
+  font-weight:600;margin-bottom:20px;cursor:pointer;
 }
 
-/* ─── CARD ─── */
-.card {
-  background: var(--white);
-  border: 1px solid var(--gray-2);
-  border-radius: var(--radius-lg);
-  box-shadow:
-    0 1px 3px rgba(0,0,0,.06),
-    0 8px 32px rgba(0,0,0,.08);
-  padding: 40px 36px;
-  width: 100%;
-  max-width: 420px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+/* Primary lime button */
+.btn-lime{
+  width:100%;background:var(--lime);color:var(--bg);
+  font-size:15px;font-weight:800;
+  border:none;border-radius:var(--r);padding:16px;
+  letter-spacing:0.5px;text-transform:uppercase;
+  cursor:pointer;transition:opacity 0.15s;
 }
-@media (max-width: 480px) {
-  .card { padding: 28px 20px; gap: 16px; }
+.btn-lime:active{opacity:0.85}
+
+.auth-switch{
+  text-align:center;font-size:13px;color:var(--g1);
+  margin-top:16px;
+}
+.auth-switch span{color:var(--lime);font-weight:700;cursor:pointer}
+
+.auth-guest{
+  text-align:center;font-size:12px;color:var(--g2);
+  margin-top:14px;cursor:pointer;
+  text-decoration:underline;text-underline-offset:2px;
 }
 
-/* ─── LOGO / EMOJI ─── */
-.logo-mark {
-  font-size: 3rem;
-  line-height: 1;
-  text-align: center;
-  animation: pop var(--dur-slow) var(--ease-back) both;
+/* ============================================================
+   VERIFY EMAIL SCREEN
+============================================================ */
+#screen-verify{
+  align-items:center;justify-content:center;padding:32px;
+  text-align:center;
 }
-.logo-mark.small { font-size: 2.2rem; }
-
-@keyframes pop {
-  from { transform: scale(0.6); opacity: 0; }
-  to   { transform: scale(1);   opacity: 1; }
+.verify-icon{
+  width:72px;height:72px;border-radius:50%;
+  background:var(--bg3);border:2px solid var(--line2);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 20px;color:var(--lime);
 }
-
-/* ─── TYPOGRAPHY ─── */
-.headline {
-  font-family: var(--font-display);
-  font-size: clamp(2rem, 6vw, 2.6rem);
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  text-align: center;
-  color: var(--black);
-}
-.headline.small { font-size: clamp(1.4rem, 4vw, 1.8rem); }
-
-.sub {
-  font-size: 0.9rem;
-  color: var(--gray-1);
-  text-align: center;
-  line-height: 1.55;
-}
-.section-label {
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--gray-1);
-  text-align: center;
-}
-.greeting {
-  font-size: 0.9rem;
-  color: var(--gray-1);
-  text-align: center;
-}
-.accent-name { color: var(--blue); font-weight: 700; }
-.memorize-hint {
-  font-size: 0.82rem;
-  color: var(--gray-1);
-  text-align: center;
-}
-.timer-label {
-  font-size: 0.75rem;
-  color: var(--gray-1);
-  text-align: center;
-  margin-top: -10px;
-  letter-spacing: 0.04em;
+.verify-title{font-size:22px;font-weight:800;margin-bottom:8px}
+.verify-sub{font-size:14px;color:var(--g1);line-height:1.6;margin-bottom:32px}
+.btn-ghost{
+  width:100%;background:transparent;color:var(--g1);
+  border:1px solid var(--line2);
+  font-size:14px;font-weight:600;
+  border-radius:var(--r);padding:14px;
+  cursor:pointer;margin-top:10px;
 }
 
-/* ─── FORM FIELDS ─── */
-.field-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+/* ============================================================
+   NAME SETUP SCREEN
+============================================================ */
+#screen-name{
+  align-items:center;justify-content:center;padding:32px;
 }
-.field-group label {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--black);
-  letter-spacing: 0.01em;
+.name-wrap{width:100%;max-width:380px}
+.name-title{
+  font-size:26px;font-weight:900;margin-bottom:6px;letter-spacing:-0.3px;
 }
-.field-group input {
-  width: 100%;
-  padding: 12px 14px;
-  font-size: 1rem;
-  font-family: var(--font-body);
-  color: var(--black);
-  background: var(--gray-3);
-  border: 1.5px solid var(--gray-2);
-  border-radius: var(--radius-sm);
-  outline: none;
-  transition:
-    border-color var(--dur-fast) ease,
-    box-shadow   var(--dur-fast) ease,
-    background   var(--dur-fast) ease;
-  -webkit-appearance: none;
+.name-sub{font-size:14px;color:var(--g1);margin-bottom:32px;line-height:1.5}
+.name-label{
+  font-size:11px;font-weight:700;color:var(--g2);
+  text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;
 }
-.field-group input:focus {
-  background: var(--white);
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+.name-input{
+  width:100%;background:var(--bg3);border:1px solid var(--line2);
+  color:var(--white);font-size:18px;font-weight:700;
+  border-radius:var(--r);padding:15px 16px;
+  margin-bottom:24px;transition:border-color 0.2s;
 }
-.field-group input.readonly-field {
-  color: var(--gray-1);
-  cursor: default;
-  user-select: none;
+.name-input:focus{border-color:var(--lime)}
+.name-input::placeholder{color:var(--g2)}
+
+/* ============================================================
+   HEADER / TOP BAR
+============================================================ */
+.top-bar{
+  height:56px;background:var(--bg);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 18px;
+  border-bottom:1px solid var(--line);
+  flex-shrink:0;
 }
-#login-password {
-  font-family: 'Courier New', monospace;
-  font-size: 1.1rem;
-  letter-spacing: 0.08em;
+.top-left{display:flex;align-items:center;gap:11px}
+.avatar{
+  width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:14px;color:var(--bg);
+  flex-shrink:0;
+}
+.top-name{font-size:14px;font-weight:700;color:var(--white)}
+.top-sub{font-size:11px;color:var(--g2)}
+.icon-btn{
+  width:36px;height:36px;border-radius:50%;
+  background:var(--bg3);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--g1);cursor:pointer;flex-shrink:0;
 }
 
-/* ─── BUTTONS ─── */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 13px 22px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  font-family: var(--font-body);
-  border: none;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition:
-    background var(--dur-fast) ease,
-    transform  var(--dur-fast) var(--ease-back),
-    box-shadow var(--dur-fast) ease;
-  -webkit-appearance: none;
-  user-select: none;
+/* ============================================================
+   BOTTOM NAV
+============================================================ */
+.bottom-nav{
+  height:var(--nav);background:var(--bg);
+  display:flex;align-items:center;
+  border-top:1px solid var(--line);flex-shrink:0;
 }
-.btn-primary {
-  background: var(--blue);
-  color: var(--white);
-  box-shadow: 0 2px 8px rgba(37,99,235,.25);
+.nav-item{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:3px;cursor:pointer;padding:6px 0;
+  color:var(--g2);
 }
-.btn-primary:hover {
-  background: var(--blue-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(37,99,235,.35);
-}
-.btn-primary:active {
-  transform: translateY(0px) scale(0.98);
-  box-shadow: 0 1px 4px rgba(37,99,235,.2);
-}
-.btn-full { width: 100%; }
-.btn-arrow {
-  display: inline-block;
-  transition: transform var(--dur-fast) var(--ease-back);
-}
-.btn:hover .btn-arrow { transform: translateX(4px); }
+.nav-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
+.nav-item.active{color:var(--lime)}
 
-/* ─── ERROR ─── */
-.error-msg {
-  font-size: 0.82rem;
-  color: var(--red);
-  text-align: center;
-  font-weight: 500;
-}
-.error-msg.hidden { display: none; }
+/* ============================================================
+   SCROLL CONTENT
+============================================================ */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  15%       { transform: translateX(-8px); }
-  30%       { transform: translateX(7px); }
-  45%       { transform: translateX(-6px); }
-  60%       { transform: translateX(5px); }
-  75%       { transform: translateX(-3px); }
-  90%       { transform: translateX(2px); }
-}
-.shake { animation: shake 0.5s var(--ease-out) both; }
-
-/* ─── PASSWORD DISPLAY BOX ─── */
-.password-box {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  background: var(--blue-light);
-  border: 1.5px solid rgba(37,99,235,.2);
-  border-radius: var(--radius-md);
-  padding: 18px 12px;
-}
-.pwd-char {
-  font-family: 'Courier New', monospace;
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: var(--blue);
-  background: var(--white);
-  border-radius: 8px;
-  width: 38px;
-  height: 46px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 1px 4px rgba(37,99,235,.12);
-  animation: charPop 0.4s var(--ease-back) both;
-}
-@keyframes charPop {
-  from { transform: scale(0.5) translateY(8px); opacity: 0; }
-  to   { transform: scale(1)   translateY(0);   opacity: 1; }
+/* ============================================================
+   SECTION LABEL
+============================================================ */
+.sec-label{
+  font-size:11px;font-weight:700;color:var(--g2);
+  text-transform:uppercase;letter-spacing:2px;
+  padding:20px 18px 10px;
 }
 
-/* ─── COUNTDOWN RING ─── */
-.timer-wrap {
-  position: relative;
-  width: 110px;
-  height: 110px;
-  margin: 0 auto;
+/* ============================================================
+   HOME SCREEN — stat row
+============================================================ */
+.stat-strip{
+  display:flex;border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+  margin-bottom:0;
 }
-.timer-ring {
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
+.stat-cell{
+  flex:1;padding:18px 0;text-align:center;
+  border-right:1px solid var(--line);
 }
-.ring-track {
-  fill: none;
-  stroke: var(--gray-2);
-  stroke-width: 8;
+.stat-cell:last-child{border-right:none}
+.stat-big{
+  font-size:26px;font-weight:900;color:var(--white);line-height:1;
 }
-.ring-progress {
-  fill: none;
-  stroke: var(--blue);
-  stroke-width: 8;
-  stroke-linecap: round;
-  stroke-dasharray: 314.16;
-  stroke-dashoffset: 0;
-  transition: stroke-dashoffset 1s linear, stroke 0.4s ease;
-  will-change: stroke-dashoffset;
-}
-.ring-progress.urgent { stroke: var(--red); }
-.timer-number {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
-  font-size: 2.2rem;
-  font-weight: 700;
-  color: var(--black);
-  letter-spacing: -0.03em;
-  transition: color 0.4s ease;
-}
-.timer-number.urgent { color: var(--red); }
-
-@keyframes pulse-urgent {
-  0%, 100% { transform: scale(1); }
-  50%       { transform: scale(1.12); }
-}
-.timer-number.pulsing {
-  animation: pulse-urgent 0.6s ease-in-out infinite;
+.stat-lbl{
+  font-size:10px;font-weight:700;color:var(--g2);
+  text-transform:uppercase;letter-spacing:1px;margin-top:4px;
 }
 
-/* ─── CHAR INDICATORS ─── */
-.char-indicators {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  min-height: 44px;
-  align-items: center;
-  flex-wrap: wrap;
+/* Run button - full width dark bar with lime text */
+.run-bar{
+  margin:16px 18px;
+  background:var(--lime);border-radius:var(--r);
+  display:flex;align-items:center;justify-content:center;
+  gap:10px;padding:17px;cursor:pointer;
+  transition:opacity 0.15s;
 }
-.char-dot {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--gray-2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.1rem;
-  line-height: 1;
-  transition:
-    background var(--dur-mid) var(--ease-back),
-    transform  var(--dur-mid) var(--ease-back);
-}
-.char-dot.correct {
-  background: rgba(34,197,94,.15);
-  transform: scale(1.1);
-  animation: dotBounce var(--dur-mid) var(--ease-back);
-}
-.char-dot.wrong {
-  background: rgba(239,68,68,.12);
-  animation: dotShake 0.35s var(--ease-out);
-}
-.char-dot.empty { background: var(--gray-2); transform: scale(1); }
-
-@keyframes dotBounce {
-  0%   { transform: scale(0.7); }
-  60%  { transform: scale(1.2); }
-  100% { transform: scale(1.1); }
-}
-@keyframes dotShake {
-  0%, 100% { transform: translateX(0); }
-  25%       { transform: translateX(-4px); }
-  75%       { transform: translateX(4px); }
+.run-bar:active{opacity:0.85}
+.run-bar-text{
+  font-size:15px;font-weight:900;
+  text-transform:uppercase;letter-spacing:1px;color:var(--bg);
 }
 
-/* ─── SUCCESS ─── */
-#screen-success { z-index: 10; }
+/* Mini map */
+.mini-map-wrap{
+  height:150px;overflow:hidden;
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+}
+#mini-map{height:100%;width:100%;background:var(--bg2);touch-action:none}
 
-#confetti-canvas {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9;
+/* Home screen: stats+button shrink to content, map fills the rest */
+#screen-home{flex-direction:column}
+/* home-scroll base removed — FIX 2: was overriding flex:1 in screen-home causing navbar to float mid-screen */
+#screen-home .mini-map-wrap{flex:1 1 0;min-height:0;height:auto;overflow:hidden;border-bottom:none;touch-action:none}
+#screen-home #mini-map{position:absolute;inset:0;touch-action:none}
+#screen-home .mini-map-wrap{position:relative}
+
+/* Home leaderboard rows */
+.lb-row{
+  display:flex;align-items:center;gap:12px;
+  padding:13px 18px;
+  border-bottom:1px solid var(--line);
 }
-.success-card {
-  text-align: center;
-  z-index: 11;
-  position: relative;
+.lb-row:last-child{border-bottom:none}
+.lb-pos{
+  font-size:13px;font-weight:700;color:var(--g2);
+  width:20px;text-align:center;flex-shrink:0;
 }
-.success-emoji {
-  font-size: 4rem;
-  line-height: 1;
-  animation: pop 0.6s var(--ease-back) 0.1s both;
+.lb-av{
+  width:34px;height:34px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:13px;color:var(--bg);flex-shrink:0;
 }
-.success-headline {
-  font-family: var(--font-display);
-  font-size: clamp(1.8rem, 5vw, 2.4rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--black);
-  animation: fadeUp 0.5s var(--ease-out) 0.25s both;
+.lb-name{font-size:13px;font-weight:700;flex:1}
+.lb-area-val{font-size:14px;font-weight:900;color:var(--lime)}
+.lb-zones{font-size:11px;color:var(--g2)}
+
+/* ============================================================
+   MAP SCREEN
+============================================================ */
+#map{position:absolute;inset:0;z-index:1;background:var(--bg2)}
+
+/* Invert standard OSM tiles to a dark look — no paid tile API needed */
+.leaflet-tile-pane{
+  filter:invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.88) saturate(0.65);
 }
-.success-sub {
-  font-size: 1rem;
-  color: var(--gray-1);
-  animation: fadeUp 0.5s var(--ease-out) 0.35s both;
+/* Popups already styled dark; markers/labels sit above tile-pane so untouched */
+
+.map-hdr{
+  position:absolute;top:0;left:0;right:0;height:52px;
+  background:rgba(9,9,9,0.92);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px;z-index:1000;
+  border-bottom:1px solid var(--line);
 }
-.success-detail {
-  font-size: 0.84rem;
-  color: var(--gray-1);
-  animation: fadeUp 0.5s var(--ease-out) 0.45s both;
+.map-close{
+  width:34px;height:34px;border-radius:50%;
+  background:var(--bg3);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--g1);cursor:pointer;flex-shrink:0;
 }
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
+.map-ttl{font-size:13px;font-weight:900;letter-spacing:2px;text-transform:uppercase}
+
+.gps-pill{
+  display:flex;align-items:center;gap:5px;
+  background:var(--bg3);border:1px solid var(--line2);
+  padding:5px 10px;border-radius:20px;
+  font-size:11px;font-weight:700;color:var(--g1);
+}
+#gps-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--g2);flex-shrink:0;transition:background 0.3s;
+}
+#gps-dot.ok{background:#34C759}
+#gps-dot.bad{background:var(--red)}
+
+#loop-toast{
+  position:absolute;top:60px;left:50%;transform:translateX(-50%);
+  background:var(--lime);color:var(--bg);
+  font-size:13px;font-weight:800;
+  padding:9px 18px;border-radius:24px;letter-spacing:0.3px;
+  z-index:2000;display:none;white-space:nowrap;
 }
 
-/* ─── RESPONSIVE ─── */
-@media (max-width: 380px) {
-  .pwd-char { font-size: 1.3rem; width: 32px; height: 40px; }
-  .char-dot { width: 30px; height: 30px; font-size: 0.95rem; }
+/* Bottom sheet */
+.map-sheet{
+  position:absolute;bottom:0;left:0;right:0;
+  background:rgba(9,9,9,0.95);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);
+  padding:16px 18px 28px;z-index:1000;
 }
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
+.sheet-handle{
+  width:32px;height:3px;background:var(--g3);
+  border-radius:2px;margin:0 auto 16px;
 }
-  </style>
+.track-row{
+  display:flex;justify-content:space-around;
+  margin-bottom:14px;
+}
+.track-cell{text-align:center}
+.track-num{font-size:22px;font-weight:900;color:#FFFFFF;line-height:1}
+.track-lbl{font-size:9px;font-weight:700;color:#666666;text-transform:uppercase;letter-spacing:1px;margin-top:3px}
+#track-status{
+  font-size:12px;color:#b8ccc5;text-align:center;
+  margin-bottom:12px;min-height:14px;letter-spacing:0.2px;
+}
+/* Map header always dark-on-dark regardless of theme */
+.map-hdr{color:#FFFFFF}
+.map-ttl{color:#FFFFFF!important}
+.gps-pill{color:#AAAAAA!important}
+.map-close{color:#AAAAAA!important}
+.track-btn.stop{background:var(--red);color:#FFFFFF}
+.track-btn{
+  width:100%;padding:15px;border-radius:var(--r);
+  font-size:14px;font-weight:900;border:none;cursor:pointer;
+  text-transform:uppercase;letter-spacing:1px;
+  transition:opacity 0.15s;
+}
+.track-btn:active{opacity:0.85}
+.track-btn.go{background:var(--lime);color:var(--bg)}
+
+/* GPS pulse dot on map */
+.gps-pulse{
+  width:14px;height:14px;background:var(--lime);border-radius:50%;
+  border:2px solid rgba(255,255,255,0.9);
+  box-shadow:0 0 0 0 rgba(197,241,53,0.5);
+  animation:gp 2s infinite;
+}
+@keyframes gp{
+  0%{box-shadow:0 0 0 0 rgba(197,241,53,0.5)}
+  70%{box-shadow:0 0 0 10px rgba(197,241,53,0)}
+  100%{box-shadow:0 0 0 0 rgba(197,241,53,0)}
+}
+
+/* territory popup */
+.leaflet-popup-content-wrapper{
+  background:var(--bg2);color:var(--white);
+  border:1px solid var(--line2);border-radius:var(--r);
+  box-shadow:none;
+}
+.leaflet-popup-tip{background:var(--bg2)}
+.leaflet-popup-content{font-size:13px;font-weight:600;line-height:1.5}
+
+/* ============================================================
+   STATS SCREEN
+============================================================ */
+.stats-hero{
+  background:var(--bg);padding:24px 18px 20px;
+  border-bottom:1px solid var(--line);
+  flex-shrink:0;
+}
+.stats-hero-lbl{
+  font-size:10px;font-weight:700;color:var(--g2);
+  text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;
+}
+.stats-hero-num{
+  font-size:52px;font-weight:900;color:var(--lime);
+  line-height:1;letter-spacing:-1px;
+}
+.stats-hero-unit{font-size:16px;color:var(--g2);font-weight:400}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.grid-cell{
+  padding:18px;
+  border-right:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+}
+.grid-cell:nth-child(2n){border-right:none}
+.grid-cell:nth-child(3),.grid-cell:nth-child(4){border-bottom:none}
+.grid-icon{color:var(--g2);margin-bottom:8px;display:flex;align-items:center}
+.grid-num{font-size:22px;font-weight:900;color:var(--white)}
+.grid-lbl{font-size:10px;font-weight:700;color:var(--g2);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+
+.hist-item{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 18px;border-bottom:1px solid var(--line);
+}
+.hist-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.hist-info{flex:1;min-width:0}
+.hist-main{font-size:14px;font-weight:800;color:var(--white)}
+.hist-sub{font-size:11px;color:var(--g2);margin-top:2px}
+.hist-val{font-size:13px;font-weight:700;color:var(--g1);flex-shrink:0}
+
+/* ============================================================
+   LEADERBOARD SCREEN
+============================================================ */
+.lb-hero{
+  background:var(--bg);padding:24px 18px 20px;
+  border-bottom:1px solid var(--line);flex-shrink:0;
+}
+.lb-hero-title{font-size:24px;font-weight:900;letter-spacing:-0.3px}
+.lb-hero-sub{font-size:13px;color:var(--g2);margin-top:3px}
+
+.lb-full-item{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 18px;border-bottom:1px solid var(--line);
+}
+.lb-full-item.me{background:rgba(197,241,53,0.05)}
+.lb-rank{font-size:14px;font-weight:900;color:#8fa49e;width:26px;text-align:center;flex-shrink:0}
+.lb-rank.top{color:#ffffff;font-size:11px}
+.lb-full-av{
+  width:38px;height:38px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:14px;color:var(--bg);flex-shrink:0;
+}
+.lb-full-info{flex:1;min-width:0}
+.lb-full-nm{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#f0f5f2}
+.lb-full-zones{font-size:11px;color:var(--g2)}
+.lb-full-area{font-size:16px;font-weight:900;color:var(--lime);flex-shrink:0}
+
+/* ============================================================
+   SHARE CARD MODAL
+============================================================ */
+#share-modal{
+  position:fixed;inset:0;z-index:8000;
+  background:rgba(0,0,0,0.85);
+  display:none;flex-direction:column;
+  align-items:center;justify-content:flex-end;
+}
+#share-modal.on{display:flex}
+.share-sheet{
+  width:100%;background:var(--bg2);
+  border-radius:20px 20px 0 0;
+  border-top:1px solid var(--line2);
+  padding:20px 18px 32px;
+  max-height:90vh;overflow-y:auto;
+}
+.share-handle{
+  width:32px;height:3px;background:var(--g3);
+  border-radius:2px;margin:0 auto 20px;
+}
+
+/* card carousel */
+.card-carousel{
+  position:relative;overflow:hidden;
+  margin-bottom:16px;
+  border-radius:var(--r);
+}
+.card-track{
+  display:flex;transition:transform 0.3s ease;
+}
+.share-canvas-wrap{
+  flex-shrink:0;width:100%;
+  display:flex;align-items:center;justify-content:center;
+}
+.share-canvas-wrap canvas{
+  max-width:100%;border-radius:var(--r);
+  display:block;
+}
+
+/* dots */
+.carousel-dots{
+  display:flex;justify-content:center;gap:6px;margin-bottom:18px;
+}
+.c-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--g3);transition:background 0.2s;
+}
+.c-dot.on{background:var(--lime)}
+
+/* share action buttons */
+.share-actions{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;
+  margin-bottom:14px;
+}
+.share-action-btn{
+  background:var(--bg3);border:1px solid var(--line2);
+  color:var(--white);border-radius:var(--r);
+  padding:12px 8px;cursor:pointer;
+  display:flex;flex-direction:column;
+  align-items:center;gap:6px;
+  font-size:11px;font-weight:600;
+  text-transform:uppercase;letter-spacing:0.5px;
+  transition:background 0.15s;
+}
+.share-action-btn:active{background:var(--line)}
+.share-action-btn svg{color:var(--g1)}
+
+.btn-close-share{
+  width:100%;background:transparent;border:1px solid var(--line2);
+  color:var(--g1);border-radius:var(--r);padding:13px;
+  font-size:14px;font-weight:600;cursor:pointer;
+}
+
+/* ============================================================
+   CLAIM CELEBRATION (brief overlay before share modal)
+============================================================ */
+#claim-flash{
+  position:fixed;inset:0;z-index:7500;
+  background:rgba(197,241,53,0.08);
+  display:none;align-items:center;justify-content:center;
+  pointer-events:none;
+}
+#claim-flash.on{display:flex;animation:flash 0.4s ease forwards}
+@keyframes flash{0%{opacity:0}50%{opacity:1}100%{opacity:0}}
+
+/* ============================================================
+   EMPTY STATE
+============================================================ */
+.empty{
+  padding:40px 24px;text-align:center;
+  color:var(--g2);
+}
+.empty-icon{color:var(--g3);margin-bottom:12px;display:flex;justify-content:center}
+.empty-txt{font-size:14px;line-height:1.5}
+
+/* hidden file input for gallery */
+#bg-picker{display:none}
+
+/* ============================================================
+   RUN TYPE PICKER
+============================================================ */
+#run-picker{
+  position:fixed;inset:0;z-index:7000;
+  background:rgba(0,0,0,0.7);
+  display:none;align-items:flex-end;
+}
+#run-picker.on{display:flex}
+.picker-sheet{
+  width:100%;background:var(--bg2);
+  border-radius:20px 20px 0 0;
+  border-top:1px solid var(--line2);
+  padding-bottom:36px;
+}
+.picker-handle{width:32px;height:3px;background:var(--g3);border-radius:2px;margin:16px auto 12px}
+.picker-ttl{font-size:13px;font-weight:700;color:var(--g2);text-transform:uppercase;
+  letter-spacing:2px;padding:0 20px 16px;text-align:center;border-bottom:1px solid var(--line)}
+.picker-opt{
+  display:flex;align-items:center;gap:16px;
+  padding:18px 20px;border-bottom:1px solid var(--line);
+  cursor:pointer;
+}
+.picker-opt:active{background:var(--bg3)}
+.picker-opt-icon{
+  width:44px;height:44px;border-radius:12px;
+  background:var(--bg3);display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.picker-opt-ttl{font-size:15px;font-weight:800}
+.picker-opt-sub{font-size:12px;color:var(--g2);margin-top:3px}
+
+/* ============================================================
+   PAUSE BUTTON + RUN CONTROLS
+============================================================ */
+#run-controls{display:none;gap:8px}
+#run-controls.on{display:flex}
+.pause-btn{
+  width:52px;height:52px;border-radius:var(--r);
+  border:1.5px solid var(--line2);background:var(--bg3);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;transition:background 0.15s;
+}
+.pause-btn:active{background:var(--line2)}
+#run-controls .track-btn{flex:1}
+
+/* ============================================================
+   LIGHT THEME
+============================================================ */
+body.light{
+  --bg:#F5F5F5;--bg2:#FFFFFF;--bg3:#EBEBEB;
+  --line:#E0E0E0;--line2:#D0D0D0;
+  --white:#111111;--g1:#444444;--g2:#777777;--g3:#C8C8C8;
+}
+body.light .leaflet-tile-pane{filter:none}
+body.light #map{background:#E8E8E8}
+body.light .map-hdr{background:rgba(245,245,245,0.94)}
+
+/* Settings follows the selected theme instead of keeping a dark surface
+   with light-theme text variables (which made labels nearly invisible). */
+body.light #settings-modal{background:rgba(0,0,0,.42)}
+body.light #settings-modal .settings-sheet{background:#f5f7f6;color:#111;border-color:#dfe5e2!important}
+body.light #settings-modal .settings-header{background:rgba(245,247,246,.94);border-bottom-color:#dfe5e2}
+body.light #settings-modal .settings-back{background:#e8eeeb;color:#27312d}
+body.light #settings-modal .settings-row,
+body.light #settings-modal .color-row{background:#fff;border-color:#dfe5e2;color:#111}
+body.light #settings-modal .settings-row-icon{color:#64716b}
+body.light #settings-modal .settings-row-label{color:#18201d}
+body.light #settings-modal .settings-row-sub,
+body.light #settings-modal .settings-row-val,
+body.light #settings-modal .settings-sec{color:#68756f}
+body.light #settings-modal .settings-name-inp{background:#f1f4f3;border-color:#d5ddda;color:#111}
+body.light #settings-modal .settings-name-inp::placeholder{color:#87918d}
+body.light #settings-modal #theme-label{color:#68756f!important}
+body.light #settings-modal .btn-ghost{color:#4f5b56;border-color:#d5ddda;background:#fff}
+
+
+/* ============================================================
+   WARMUP OVERLAY
+============================================================ */
+#warmup-overlay{
+  position:absolute;inset:0;z-index:3000;
+  background:rgba(9,9,9,0.97);
+  display:none;flex-direction:column;
+  align-items:center;justify-content:center;gap:12px;
+  pointer-events:all;
+}
+#warmup-overlay.on{display:flex}
+.warmup-label{
+  font-size:11px;font-weight:700;color:var(--g2);
+  text-transform:uppercase;letter-spacing:3px;
+}
+#warmup-count{
+  font-size:100px;font-weight:900;color:var(--lime);
+  line-height:1;letter-spacing:-4px;min-width:150px;text-align:center;
+}
+.warmup-sub{font-size:13px;color:var(--g1);text-align:center;line-height:1.6}
+.warmup-gps-pill{
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg3);border:1px solid var(--line2);
+  padding:9px 16px;border-radius:20px;
+  font-size:12px;font-weight:600;color:var(--g1);margin-top:8px;
+}
+#warmup-gps-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--g2);transition:background 0.3s;flex-shrink:0;
+}
+#warmup-gps-dot.ok{background:#34C759}
+
+/* ============================================================
+   NORMAL RUN BUTTON
+============================================================ */
+.run-bar-ghost{
+  margin:10px 18px 0;
+  background:transparent;border:1px solid var(--line2);border-radius:var(--r);
+  display:flex;align-items:center;justify-content:center;
+  gap:10px;padding:14px;cursor:pointer;transition:background 0.15s;
+}
+.run-bar-ghost:active{background:var(--bg3)}
+.run-bar-ghost-text{
+  font-size:13px;font-weight:800;
+  text-transform:uppercase;letter-spacing:1px;color:var(--g1);
+}
+
+/* ============================================================
+   NORMAL RUN SUMMARY
+============================================================ */
+#normal-summary{
+  position:fixed;inset:0;z-index:8000;
+  /* FIX 6: Changed from solid black to semi-transparent so map shows through */
+  background:rgba(2,10,8,0.78);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  display:none;align-items:flex-end;
+}
+#normal-summary.on{display:flex}
+.summary-sheet{
+  width:100%;background:var(--bg2);
+  border-radius:20px 20px 0 0;
+  border-top:1px solid var(--line2);
+  padding:20px 18px 36px;
+}
+.summary-handle{width:32px;height:3px;background:var(--g3);border-radius:2px;margin:0 auto 20px}
+.summary-ttl{font-size:18px;font-weight:900;letter-spacing:-0.3px;margin-bottom:20px;color:#ffffff}
+.summary-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  border:1px solid var(--line);border-radius:var(--r);
+  overflow:hidden;margin-bottom:20px;
+}
+.summary-cell{
+  padding:18px;text-align:center;
+  border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+}
+.summary-cell:nth-child(2n){border-right:none}
+.summary-cell:nth-child(3),.summary-cell:nth-child(4){border-bottom:none}
+.summary-num{font-size:24px;font-weight:900;color:var(--lime)}
+.summary-lbl{font-size:10px;font-weight:700;color:#8fa89f;
+  text-transform:uppercase;letter-spacing:1px;margin-top:3px}
+
+/* ============================================================
+   SETTINGS MODAL
+============================================================ */
+#settings-modal{
+  position:fixed;inset:0;z-index:8000;
+  background:rgba(0,0,0,0.7);
+  display:none;align-items:flex-end;
+}
+#settings-modal.on{display:flex}
+.settings-sheet{
+  width:100%;background:var(--bg2);
+  border-radius:20px 20px 0 0;
+  border-top:1px solid var(--line2);
+  max-height:88vh;overflow-y:auto;
+  padding-bottom:36px;
+}
+.settings-handle{width:32px;height:3px;background:var(--g3);border-radius:2px;margin:16px auto 8px}
+.settings-ttl{font-size:17px;font-weight:900;padding:8px 18px 16px;border-bottom:1px solid var(--line)}
+.settings-sec{
+  font-size:10px;font-weight:700;color:var(--g2);
+  text-transform:uppercase;letter-spacing:2px;
+  padding:18px 18px 6px;
+}
+.settings-row{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 18px;border-bottom:1px solid var(--line);
+}
+.settings-row-icon{color:var(--g2);flex-shrink:0}
+.settings-row-body{flex:1;min-width:0}
+.settings-row-label{font-size:14px;font-weight:600}
+.settings-row-sub{font-size:11px;color:var(--g2);margin-top:2px}
+.settings-row-val{font-size:13px;color:var(--g1);flex-shrink:0}
+.settings-row.danger .settings-row-label{color:var(--red)}
+
+/* Toggle switch */
+.sw{position:relative;width:44px;height:26px;flex-shrink:0}
+.sw input{opacity:0;width:0;height:0;position:absolute}
+.sw-track{position:absolute;inset:0;background:var(--g3);border-radius:13px;
+  transition:background 0.2s;cursor:pointer}
+.sw input:checked+.sw-track{background:var(--lime)}
+.sw-thumb{position:absolute;top:3px;left:3px;width:20px;height:20px;
+  border-radius:50%;background:#fff;transition:transform 0.2s;pointer-events:none}
+.sw input:checked~.sw-thumb{transform:translateX(18px)}
+
+/* Name edit inline */
+.settings-name-row{display:flex;gap:8px;align-items:center;flex:1}
+.settings-name-inp{
+  flex:1;background:var(--bg3);border:1px solid var(--line2);
+  color:var(--white);font-size:14px;font-weight:700;
+  border-radius:8px;padding:8px 12px;
+}
+.settings-name-inp:focus{border-color:var(--lime)}
+.settings-save-btn{
+  background:var(--lime);color:var(--bg);
+  border:none;border-radius:8px;padding:8px 14px;
+  font-size:13px;font-weight:800;cursor:pointer;
+}
+
+/* Color swatches */
+.color-row{
+  display:flex;gap:10px;flex-wrap:wrap;
+  padding:12px 18px 16px;border-bottom:1px solid var(--line);
+}
+.color-swatch{
+  width:34px;height:34px;border-radius:50%;
+  cursor:pointer;border:3px solid transparent;
+  transition:border-color 0.2s;flex-shrink:0;
+}
+.color-swatch.sel{border-color:var(--white)}
+
+/* Screen visibility safety: only the active screen may render.
+   This intentionally overrides legacy screen-specific display rules. */
+.screen:not(.active){display:none!important}
+
+/* ============================================================
+   TURFWAR REFERENCE UI REDESIGN
+   Visual layer only: existing IDs, handlers and data flow preserved.
+============================================================ */
+:root{
+  --bg:#06110f;--bg2:#0a1714;--bg3:rgba(18,35,31,.72);
+  --line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.15);
+  --lime:#b8f24a;--lime-d:#8fcf24;--white:#f5f8f6;
+  --g1:#a6b1ad;--g2:#71807a;--g3:#34423e;
+  --red:#ff665e;--r:16px;--r-lg:22px;--nav:70px;
+}
+html,body{background:#06110f}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;letter-spacing:-.01em}
+.screen{background:#06110f}
+
+/* shared glass language */
+.home-primary-card,.home-stat-card,.home-history-card,.stats-hero,.grid-cell,.lb-full-item,.settings-sheet,.share-sheet,.summary-sheet,.picker-sheet{
+  border:1px solid rgba(255,255,255,.11)!important;
+  box-shadow:0 14px 36px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.035);
+}
+
+/* HOME */
+#screen-home{position:relative;isolation:isolate;overflow:hidden;background:
+  radial-gradient(ellipse at 50% 8%,rgba(57,112,72,.40) 0%,rgba(6,17,15,0) 43%),
+  linear-gradient(180deg,#102b22 0%,#071612 43%,#06110f 100%)}
+.home-bg-art{position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.home-bg-art:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,17,14,.10),rgba(4,14,12,.68) 62%,#06110f 100%);z-index:3}
+.home-bg-art:after{content:"";position:absolute;width:260px;height:260px;left:-70px;top:95px;border-radius:50%;background:rgba(126,230,58,.10);filter:blur(48px)}
+.mountain{position:absolute;left:-8%;width:116%;bottom:13%;height:42%;clip-path:polygon(0 100%,0 72%,10% 63%,18% 72%,29% 42%,39% 67%,49% 30%,58% 63%,68% 48%,77% 72%,89% 35%,100% 63%,100% 100%);transform:scaleX(1.08)}
+.mountain-back{background:linear-gradient(180deg,rgba(36,73,54,.48),rgba(8,24,19,.88));opacity:.85}
+.mountain-front{bottom:11%;height:34%;background:linear-gradient(180deg,rgba(13,42,30,.9),rgba(5,18,15,1));filter:blur(.2px);opacity:.96}
+.home-topbar{height:104px;padding:24px 17px 8px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:4;flex-shrink:0}
+.home-brand{font-size:31px;line-height:1;font-weight:900;letter-spacing:-1.4px;color:#fff;text-shadow:0 2px 16px rgba(0,0,0,.3)}
+.home-tagline{font-size:11px;color:rgba(228,239,234,.72);margin-top:7px;letter-spacing:.4px}.home-tagline span{margin:0 5px;color:rgba(190,236,91,.75)}
+.home-profile-btn{width:43px;height:43px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(192,239,110,.20);border:1px solid rgba(255,255,255,.18);box-shadow:0 8px 25px rgba(0,0,0,.2);cursor:pointer}
+.home-profile-btn .avatar{width:34px;height:34px;font-size:14px;background:var(--lime)!important;color:#173018}
+#screen-home .home-scroll{position:relative;z-index:3;flex:1;overflow-y:auto;padding:4px 16px 92px;-webkit-overflow-scrolling:touch}
+.home-primary-card{min-height:94px;border-radius:19px;background:linear-gradient(135deg,rgba(27,55,44,.80),rgba(8,27,22,.72));backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);display:flex;align-items:center;padding:15px 15px;gap:13px;margin-bottom:13px}
+.home-primary-icon{width:52px;height:52px;border-radius:50%;background:rgba(141,235,76,.11);border:1px solid rgba(177,244,101,.15);display:flex;align-items:center;justify-content:center;color:var(--lime);flex-shrink:0}
+.home-primary-copy{flex:1}.home-card-label{font-size:12px;color:#b9c3bf;margin-bottom:3px}.home-primary-value{font-size:28px;line-height:1;font-weight:900;letter-spacing:-.7px;color:var(--lime)}.home-primary-value small{font-size:13px;font-weight:600;color:#a5b1ac;margin-left:4px;letter-spacing:0}.home-chevron{color:#a0aaa6}
+.home-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:20px}
+.home-stat-card{min-height:91px;border-radius:17px;background:rgba(9,27,23,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:13px 14px 12px;position:relative;overflow:hidden}
+.home-stat-card:after{content:"";position:absolute;right:-25px;top:-25px;width:80px;height:80px;border-radius:50%;background:rgba(180,241,70,.035)}
+.home-stat-icon{color:var(--lime);margin-bottom:6px;height:21px}.home-stat-label{font-size:10px;color:#8fa89f;letter-spacing:.2px;margin-top:4px}.home-stat-value{font-size:22px;font-weight:900;line-height:1.1;color:#ffffff!important;text-shadow:0 1px 4px rgba(0,0,0,.5)}
+.home-section-head{display:flex;align-items:center;justify-content:space-between;margin:0 2px 9px}.home-section-head span{font-size:14px;font-weight:700;color:#edf2ef}.home-section-head button{border:0;background:none;color:#aab4b0;font-size:11px;padding:4px;cursor:pointer}
+.home-history-card{min-height:69px;border-radius:17px;background:rgba(8,25,21,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:flex;align-items:center;gap:12px;padding:12px 13px;color:#95a29d}.home-history-icon{width:43px;height:43px;border-radius:14px;background:rgba(255,255,255,.055);display:flex;align-items:center;justify-content:center;color:#d7dfdc;flex-shrink:0}.home-history-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}.home-history-copy strong{font-size:12px;color:#f0f4f2}.home-history-copy span{font-size:10px;color:#899690}
+.home-fab{position:fixed;z-index:20;right:22px;bottom:80px;width:57px;height:57px;border:0;border-radius:50%;background:linear-gradient(135deg,#d5ff70,#8fdc36);color:#14220f;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 28px rgba(111,190,47,.35),0 0 0 7px rgba(170,238,85,.06);cursor:pointer}.home-fab:active{transform:scale(.96)}
+#screen-home .bottom-nav,#screen-stats .bottom-nav,#screen-leaderboard .bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  z-index:10;background:rgba(5,19,16,.95);
+  border-top:1px solid rgba(255,255,255,.09);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  height:70px;padding-bottom:2px;
+  /* FIX: fixed bottom nav always sticks to screen bottom in WebView */
+}
+#screen-home .home-scroll{padding-bottom:82px}
+#screen-stats .scroll{padding-bottom:82px}
+#screen-leaderboard .scroll{padding-bottom:82px}
+#screen-home .nav-item,#screen-stats .nav-item,#screen-leaderboard .nav-item{color:#75817d;gap:5px}.nav-label{font-size:9px;text-transform:none;letter-spacing:0;font-weight:600}.nav-item.active{color:var(--lime)!important}.nav-item.active svg{filter:drop-shadow(0 0 6px rgba(184,242,74,.22))}
+
+/* MAP */
+#screen-map{background:#091714}
+#screen-map #map{filter:saturate(.82) brightness(.72) contrast(1.02)}
+#screen-map .map-hdr{height:auto;top:16px;left:14px;right:14px;background:transparent;border:0;padding:0;display:block;z-index:1100}
+/* map-search removed — leftover UI */
+
+/* Save image popup */
+#save-popup{
+  position:absolute;top:16px;left:50%;transform:translateX(-50%);
+  z-index:9100;pointer-events:none;
+  opacity:0;transition:opacity .3s ease;
+  white-space:nowrap;
+}
+#save-popup.on{opacity:1}
+.save-popup-inner{
+  display:flex;align-items:center;gap:12px;
+  background:linear-gradient(135deg,#0f2a22,#0a1e18);
+  border:1px solid rgba(184,242,74,.35);
+  border-radius:16px;padding:14px 20px;
+  box-shadow:0 8px 28px rgba(0,0,0,.45),0 0 0 1px rgba(184,242,74,.08);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+.save-popup-title{font-size:14px;font-weight:800;color:#ffffff;letter-spacing:-.2px}
+.save-popup-sub{font-size:11px;color:#8fa89f;margin-top:2px}
+.map-back-btn{position:absolute;left:0;top:60px;width:43px;height:43px;border-radius:50%;background:rgba(7,22,18,.88);border:1px solid rgba(255,255,255,.12);color:#eaf0ed;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 25px rgba(0,0,0,.3);cursor:pointer}
+.map-locate{position:absolute;right:2px;top:60px;width:43px;height:43px;border-radius:50%;background:rgba(7,22,18,.88);border:1px solid rgba(255,255,255,.12);color:#eaf0ed;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 25px rgba(0,0,0,.3);cursor:pointer}.map-mode-title{display:none}
+#screen-map .map-sheet{left:10px;right:10px;bottom:9px;border-radius:25px;background:rgba(6,20,17,.88);border:1px solid rgba(255,255,255,.14);padding:12px 15px 16px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 16px 45px rgba(0,0,0,.36)}
+#screen-map .sheet-handle{width:37px;height:4px;background:rgba(255,255,255,.28);margin:0 auto 16px}.track-row{margin-bottom:16px}.track-num{font-size:24px;color:#ffffff!important;letter-spacing:-.5px}.track-lbl{font-size:9px;color:#a5b5ae;letter-spacing:.5px}.track-btn{border-radius:26px!important;padding:14px!important;background:linear-gradient(135deg,#cfff66,#91df39)!important;color:#13220e!important;box-shadow:0 8px 22px rgba(120,210,51,.20)}.track-btn.stop{background:var(--red)!important;color:#fff!important}.pause-btn{border-radius:50%;width:49px;height:49px;background:rgba(255,255,255,.07)}
+#screen-map .gps-pill{display:none}
+
+/* STATS */
+#screen-stats{background:linear-gradient(180deg,#0b1c17,#06110f 70%);}
+#screen-stats .stats-hero{margin:15px 16px 12px;padding:18px;border-radius:20px;background:linear-gradient(145deg,rgba(30,58,45,.88),rgba(9,28,22,.72));backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.1);position:relative;overflow:hidden}
+#screen-stats .stats-hero:after{content:"";position:absolute;right:-45px;top:-55px;width:170px;height:170px;border-radius:50%;background:rgba(176,239,75,.08);filter:blur(5px)}
+.stats-hero-lbl{font-size:11px;color:#a7b3ae;text-transform:none;letter-spacing:.3px;margin-bottom:6px}.stats-hero-num{font-size:48px;color:#f4f7f5}.stats-hero-unit{font-size:14px;color:#88958f}
+#screen-stats .scroll{padding:0 16px 10px}.grid2{gap:10px}.grid-cell{padding:16px;border-radius:17px;background:rgba(10,29,24,.70);border:1px solid rgba(255,255,255,.09)!important}.grid-cell:nth-child(3),.grid-cell:nth-child(4){border-bottom:1px solid rgba(255,255,255,.09)}.grid-icon{color:var(--lime);margin-bottom:9px}.grid-num{font-size:23px}.grid-lbl{font-size:9px;text-transform:none;letter-spacing:.2px;color:#84908b}
+#screen-stats .sec-label{padding:21px 2px 10px;font-size:14px;text-transform:none;letter-spacing:0;color:#eef2f0}.hist-item{margin-bottom:8px;border:1px solid rgba(255,255,255,.08);border-radius:15px;background:rgba(10,29,24,.62);padding:13px 14px}.hist-item:last-child{border-bottom:1px solid rgba(255,255,255,.08)}
+
+/* LEADERBOARD */
+#screen-leaderboard{background:radial-gradient(ellipse at 75% 15%,rgba(50,95,62,.32),transparent 35%),linear-gradient(180deg,#0b2119,#06110f 100%);position:relative}
+#screen-leaderboard:after{content:"";position:absolute;left:0;right:0;bottom:70px;height:40%;background:linear-gradient(180deg,transparent,rgba(5,17,14,.15)),linear-gradient(155deg,transparent 28%,rgba(24,57,40,.45) 29%,rgba(9,27,21,.95) 52%,rgba(5,16,13,1) 53%);clip-path:polygon(0 55%,18% 38%,29% 49%,43% 20%,58% 48%,73% 30%,88% 50%,100% 28%,100% 100%,0 100%);pointer-events:none}
+#screen-leaderboard .lb-hero{height:104px;padding:25px 17px 12px;background:transparent;border:0;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:2}.lb-hero-title{font-size:25px}.lb-hero-sub{font-size:11px;color:#7f8c87;margin-top:5px}
+#screen-leaderboard .scroll{position:relative;z-index:3;padding:0 12px 90px}.lb-full-item{margin:7px 4px;border-radius:17px;padding:12px 12px;background:rgba(12,32,26,.70);backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px)}.lb-full-item.me{background:linear-gradient(135deg,rgba(37,71,48,.86),rgba(13,38,27,.75));border-color:rgba(188,239,87,.38)!important;box-shadow:0 10px 26px rgba(0,0,0,.16),inset 0 0 0 1px rgba(190,242,93,.04)}.lb-rank{font-size:13px;color:#9aa5a1;width:22px}.lb-full-av{width:42px;height:42px;border:1px solid rgba(255,255,255,.12)}.lb-full-nm{font-size:13px;color:#f0f5f2}.lb-full-zones{font-size:10px;color:#81908a}.lb-full-area{font-size:15px;color:var(--lime)}
+
+/* SETTINGS — turn existing modal into reference full-screen settings */
+#settings-modal{align-items:stretch;background:#06110f;z-index:8000}.settings-sheet{width:100%;height:100%;max-height:none;border-radius:0;background:linear-gradient(180deg,#0b1c17,#06110f);border:0!important;overflow-y:auto;padding:0 14px 30px}.settings-handle{display:none}.settings-ttl{font-size:24px;padding:23px 4px 18px;border-bottom:0}.settings-sec{font-size:10px;color:#7f8d87;padding:14px 4px 7px;letter-spacing:1.8px}.settings-row{margin:0 0 1px;border:1px solid rgba(255,255,255,.075);background:rgba(13,32,27,.62);padding:14px 13px;border-bottom:1px solid rgba(255,255,255,.075);min-height:58px}.settings-row:first-of-type{border-radius:17px 17px 0 0}.settings-row:last-of-type{border-radius:0 0 17px 17px}.settings-row-icon{color:#a5b0ac}.settings-row-label{font-size:13px}.settings-row-sub{font-size:10px;color:#7e8b86}.settings-name-inp{background:rgba(255,255,255,.055);border-color:rgba(255,255,255,.11);border-radius:10px}.settings-save-btn{border-radius:10px}.color-row{padding:11px 13px 13px;background:rgba(13,32,27,.62);border:1px solid rgba(255,255,255,.075);border-top:0;border-radius:0 0 17px 17px}.sw{width:42px;height:24px}.sw-track{background:#34423d}.sw input:checked+.sw-track{background:#7dcc3d}.sw-thumb{width:18px;height:18px;top:3px}.sw input:checked~.sw-thumb{transform:translateX(18px)}
+
+
+.settings-header{height:72px;display:grid;grid-template-columns:40px 1fr 40px;align-items:center;border-bottom:1px solid rgba(255,255,255,.07);position:sticky;top:0;z-index:4;background:rgba(8,25,21,.90);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);margin:0 -14px;padding:0 14px}.settings-header .settings-ttl{padding:0;border:0;text-align:center}.settings-back{width:40px;height:40px;border:0;border-radius:50%;background:rgba(255,255,255,.055);color:#d7dfdc;display:flex;align-items:center;justify-content:center;cursor:pointer}.settings-sheet>.settings-ttl{display:none}
+
+/* Other overlays inherit the premium glass treatment */
+#run-picker,#normal-summary,#share-modal{background:rgba(1,9,7,.72);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.picker-sheet,.summary-sheet,.share-sheet{background:linear-gradient(180deg,#10231d,#07140f);border-color:rgba(255,255,255,.13)!important}.picker-ttl{color:#88958f}.picker-opt{border-color:rgba(255,255,255,.07)}.picker-opt-icon{background:rgba(255,255,255,.055)}
+.btn-lime{background:linear-gradient(135deg,#d0ff69,#91df39);border-radius:14px}.btn-google,.field-input,.name-input{background:rgba(255,255,255,.045);border-color:rgba(255,255,255,.11);border-radius:14px}.btn-ghost{border-color:rgba(255,255,255,.12);border-radius:14px}
+
+@media (min-width:700px){
+  .screen{max-width:430px;left:50%;right:auto;transform:translateX(-50%);width:430px;box-shadow:0 0 70px rgba(0,0,0,.45)}
+  #screen-map{width:430px}.home-fab{right:24px}
+}
+
+</style>
 </head>
 <body>
 
-  <!-- SCREEN 1 — USERNAME -->
-  <div id="screen-username" class="screen active">
-    <div class="card">
-      <div class="logo-mark">🧠</div>
-      <h1 class="headline">Memory<br>Challenge</h1>
-      <p class="sub">How good is your memory? We'll generate a password — you memorize it, then type it back.</p>
-      <div class="field-group">
-        <label for="username-input">Choose a username</label>
-        <input id="username-input" type="text" placeholder="e.g. alex42"
-          autocomplete="off" spellcheck="false" maxlength="24" />
+<!-- ============================================================
+     SPLASH
+============================================================ -->
+<div id="splash">
+  <div class="splash-mark">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+  </div>
+  <div style="font-size:22px;font-weight:900;letter-spacing:3px">TURFWAR</div>
+  <div style="font-size:11px;color:var(--g2);letter-spacing:3px;text-transform:uppercase">Claim Your Territory</div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Claim flash -->
+<div id="claim-flash"></div>
+
+<!-- Hidden file input for share card background -->
+<input id="bg-picker" type="file" accept="image/*" onchange="onBgPicked(event)">
+
+<!-- ============================================================
+     AUTH SCREEN
+============================================================ -->
+<div id="screen-auth" class="screen">
+  <div class="auth-wrap">
+
+    <div class="auth-brand">
+      <div class="auth-logo">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
       </div>
-      <button id="btn-generate" class="btn btn-primary btn-full">
-        Generate Password <span class="btn-arrow">→</span>
+      <div class="auth-title">TURFWAR</div>
+      <div class="auth-sub">Claim Your Territory</div>
+    </div>
+
+    <!-- Google -->
+    <button class="btn-google" onclick="signInGoogle()">
+      <!-- Google G SVG -->
+      <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+        <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+        <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
+        <path d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+        <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+      </svg>
+      Continue with Google
+    </button>
+
+    <div class="auth-divider">or</div>
+
+    <!-- Email -->
+    <div class="field-wrap">
+      <div class="field-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      </div>
+      <input id="auth-email" class="field-input" type="email" placeholder="Email address" autocomplete="email"/>
+    </div>
+
+    <!-- Email verification status (shown when sign-in returns unverified) -->
+    <div id="verify-banner" style="display:none;align-items:center;gap:10px;background:rgba(255,180,0,.10);border:1px solid rgba(255,180,0,.28);border-radius:12px;padding:11px 14px;margin-bottom:2px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0b429" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:700;color:#f0b429">Email not verified</div>
+        <div style="font-size:11px;color:#b8a070;margin-top:2px">Check your inbox or <span onclick="resendVerifyFromLogin()" style="color:#f0b429;text-decoration:underline;cursor:pointer">resend verification email</span></div>
+      </div>
+    </div>
+
+    <!-- Password -->
+    <div class="field-wrap">
+      <div class="field-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <input id="auth-pass" class="field-input" type="password" placeholder="Password" autocomplete="current-password"/>
+      <div class="field-toggle" onclick="togglePass('auth-pass',this)" id="eye1">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </div>
+    </div>
+
+    <!-- Confirm password (sign-up only) -->
+    <div class="field-wrap" id="confirm-wrap" style="display:none">
+      <div class="field-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <input id="auth-confirm" class="field-input" type="password" placeholder="Confirm password"/>
+    </div>
+
+    <div class="auth-forgot" id="forgot-link" onclick="forgotPassword()">Forgot password?</div>
+
+    <button class="btn-lime" id="auth-btn" onclick="submitAuth()">Sign In</button>
+
+    <div class="auth-switch" id="auth-switch">
+      Don't have an account? <span onclick="switchAuthMode()">Sign Up</span>
+    </div>
+    <div id="auth-verify-note" style="display:none;font-size:11px;color:#8fa89f;text-align:center;margin-top:4px;line-height:1.5">
+      📧 A verification link will be sent to your email
+    </div>
+    <div class="auth-guest" onclick="playAsGuest()">Continue as Guest</div>
+  </div>
+</div>
+
+<!-- ============================================================
+     VERIFY EMAIL SCREEN
+============================================================ -->
+<div id="screen-verify" class="screen" style="background:var(--bg);justify-content:center;align-items:center">
+  <div style="width:100%;max-width:380px;padding:32px;text-align:center">
+
+    <!-- Animated envelope icon -->
+    <div id="verify-icon-wrap" style="width:80px;height:80px;border-radius:50%;background:rgba(184,242,74,.12);border:2px solid rgba(184,242,74,.25);display:flex;align-items:center;justify-content:center;margin:0 auto 24px">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+    </div>
+
+    <!-- Success icon (hidden until verified) -->
+    <div id="verify-success-wrap" style="display:none;width:80px;height:80px;border-radius:50%;background:rgba(184,242,74,.18);border:2px solid var(--lime);align-items:center;justify-content:center;margin:0 auto 24px">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+
+    <div class="verify-title" id="verify-title-txt">Check Your Email</div>
+    <div class="verify-sub" id="verify-sub-txt">
+      We sent a verification link to<br>
+      <span id="verify-email" style="color:var(--white);font-weight:700;word-break:break-all"></span><br>
+      <span style="color:#8fa89f">Tap the link in your email, then come back.</span>
+    </div>
+
+    <!-- Steps -->
+    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px;margin:20px 0;text-align:left">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <div style="width:22px;height:22px;border-radius:50%;background:var(--lime);color:#000;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+        <div style="font-size:12px;color:#c8d5d0">Open the email from TurfWar</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <div style="width:22px;height:22px;border-radius:50%;background:var(--lime);color:#000;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+        <div style="font-size:12px;color:#c8d5d0">Tap the verification link</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:22px;height:22px;border-radius:50%;background:var(--lime);color:#000;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
+        <div style="font-size:12px;color:#c8d5d0">Come back and tap Continue</div>
+      </div>
+    </div>
+
+    <div id="verify-actions" style="width:100%">
+      <button class="btn-lime" onclick="checkVerifiedAnimated()" style="margin-bottom:10px">I've Verified — Continue</button>
+      <button class="btn-ghost" onclick="resendVerify()">Resend Email</button>
+      <button class="btn-ghost" onclick="signOut()" style="margin-top:10px;color:#8fa89f">← Back to Login</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     NAME SETUP SCREEN
+============================================================ -->
+<div id="screen-name" class="screen" style="background:var(--bg)">
+  <div class="name-wrap" style="margin:auto;padding:32px">
+    <div style="margin-bottom:24px">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+    <div class="name-title">Choose Your<br>Battle Name</div>
+    <div class="name-sub">This is how other players will know you on the map.</div>
+    <div class="name-label">Battle Name</div>
+    <input id="name-inp" class="name-input" type="text" placeholder="e.g. ShadowRunner" maxlength="20" autocorrect="off" onkeydown="if(event.key==='Enter')saveName()"/>
+    <button class="btn-lime" onclick="saveName()">Enter The War</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     HOME SCREEN
+============================================================ -->
+<div id="screen-home" class="screen">
+  <div class="home-bg-art" aria-hidden="true"><div class="mountain mountain-back"></div><div class="mountain mountain-front"></div></div>
+
+  <div class="home-topbar">
+    <div>
+      <div class="home-brand">TurfWar</div>
+      <div class="home-tagline">Claim <span>•</span> Run <span>•</span> Conquer</div>
+    </div>
+    <div class="home-profile-btn" onclick="openSettings()" aria-label="Open profile settings">
+      <div class="avatar" id="home-av" style="background:var(--lime)"></div>
+    </div>
+  </div>
+
+  <div class="scroll home-scroll">
+    <section class="home-primary-card">
+      <div class="home-primary-icon">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.1 7-12A7 7 0 0 0 5 9c0 5.9 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg>
+      </div>
+      <div class="home-primary-copy">
+        <div class="home-card-label">Total Territory</div>
+        <div class="home-primary-value"><span id="home-area">0</span><small>m²</small></div>
+      </div>
+      <svg class="home-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </section>
+
+    <div class="home-stat-grid">
+      <div class="home-stat-card">
+        <div class="home-stat-icon"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></div>
+        <div class="home-stat-label">Zones Owned</div><div class="home-stat-value" id="home-zones">0</div>
+      </div>
+      <div class="home-stat-card">
+        <div class="home-stat-icon"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19c2-4 5-6 8-6 3.2 0 4.7-2.1 5.5-5.5"/><circle cx="18" cy="5" r="2"/></svg></div>
+        <div class="home-stat-label">KM Covered</div><div class="home-stat-value" id="home-dist">0.0</div>
+      </div>
+      <div class="home-stat-card">
+        <div class="home-stat-icon"><svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h8l-1 8 10-12h-8l1-8Z"/></svg></div>
+        <div class="home-stat-label">Kcal Burned</div><div class="home-stat-value" id="home-cals">0</div>
+      </div>
+      <div class="home-stat-card">
+        <div class="home-stat-icon"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13 17 22l-5-3-5 3 1.5-9"/></svg></div>
+        <div class="home-stat-label">Global Rank</div><div class="home-stat-value" id="home-rank">#—</div>
+      </div>
+    </div>
+
+    <div class="home-section-head"><span>Run History</span><button type="button" onclick="navTo('stats')">View All</button></div>
+    <div class="home-history-card">
+      <div class="home-history-icon"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg></div>
+      <div class="home-history-copy"><strong id="home-history-title">No runs yet</strong><span id="home-history-sub">Go claim some turf!</span></div>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+  </div>
+
+  <button class="home-fab" onclick="openRunPicker()" aria-label="Start run"><svg width="23" height="23" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg></button>
+
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="navTo('home')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="nav-label">Home</span></div>
+    <div class="nav-item" onclick="navTo('map')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg><span class="nav-label">Map</span></div>
+    <div class="nav-item" onclick="navTo('stats')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="nav-label">Stats</span></div>
+    <div class="nav-item" onclick="navTo('leaderboard')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11Z"/></svg><span class="nav-label">Rank</span></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MAP SCREEN
+============================================================ -->
+<div id="screen-map" class="screen">
+  <div id="map"></div>
+  <div class="map-hdr">
+    <button class="map-back-btn" onclick="mapGoBack()" aria-label="Back">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+
+    <button class="map-locate" type="button" onclick="centerOn(A.map,16)" aria-label="Locate me"><svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="m21 3-7.2 3.1L10.7 3 3 10.7l7.3 3.1L13.4 21 21 13.3l-3.1-7.2L21 3Zm-8.1 8.1a1.5 1.5 0 1 1-2.1 2.1 1.5 1.5 0 0 1 2.1-2.1Z"/></svg></button>
+    <div class="map-mode-title"><span id="map-ttl">TurfWar</span><div class="gps-pill"><span id="gps-dot"></span><span id="gps-lbl">GPS</span></div></div>
+  </div>
+  <div id="loop-toast">Loop closed — saving territory</div>
+
+  <!-- Warmup overlay -->
+  <div id="warmup-overlay">
+    <div class="warmup-label">Quick Warm Up</div>
+    <div id="warmup-count">30</div>
+    <div class="warmup-sub">GPS is locking in...<br>Run begins automatically</div>
+    <div class="warmup-gps-pill">
+      <span id="warmup-gps-dot"></span>
+      GPS Accuracy
+    </div>
+  </div>
+
+  <div class="map-sheet">
+    <div class="sheet-handle"></div>
+    <div class="track-row">
+      <div class="track-cell"><div class="track-num" id="track-dist">0.00</div><div class="track-lbl">km</div></div>
+      <div class="track-cell"><div class="track-num" id="track-time">00:00</div><div class="track-lbl">Time</div></div>
+      <div class="track-cell"><div class="track-num" id="track-pace">--:--</div><div class="track-lbl">Min/km</div></div>
+      <div class="track-cell" id="track-area-cell"><div class="track-num" id="track-area">0</div><div class="track-lbl">m²</div></div>
+    </div>
+    <div id="track-status">Tap Start Run to begin claiming territory</div>
+    <!-- Run controls: shown when tracking (pause + stop side by side) -->
+    <div id="run-controls">
+      <button class="pause-btn" id="pause-btn" onclick="togglePause()">
+        <svg id="pause-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
       </button>
-      <p id="username-error" class="error-msg hidden">Please enter a username first.</p>
+      <button id="stop-btn" class="track-btn stop" onclick="toggleTracking()">Stop Run</button>
+    </div>
+    <!-- Start button: shown when idle -->
+    <button id="track-btn" class="track-btn go" onclick="toggleTracking()">Start Run</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     STATS SCREEN
+============================================================ -->
+<div id="screen-stats" class="screen">
+  <div class="stats-hero">
+    <div class="stats-hero-lbl">Total Territory</div>
+    <div>
+      <span class="stats-hero-num" id="stats-area">0</span>
+      <span class="stats-hero-unit"> m²</span>
     </div>
   </div>
 
-  <!-- SCREEN 2 — MEMORIZE -->
-  <div id="screen-memorize" class="screen">
-    <div class="card">
-      <div class="greeting">Good luck, <span id="memorize-username" class="accent-name"></span>!</div>
-      <h2 class="section-label">Your Password</h2>
-      <div id="password-display" class="password-box"></div>
-      <p class="memorize-hint">Memorize this before the timer runs out.</p>
-      <div class="timer-wrap">
-        <svg class="timer-ring" viewBox="0 0 120 120">
-          <circle class="ring-track" cx="60" cy="60" r="50" />
-          <circle id="ring-progress" class="ring-progress" cx="60" cy="60" r="50" />
-        </svg>
-        <div id="timer-number" class="timer-number">10</div>
+  <div class="scroll">
+    <div class="grid2">
+      <div class="grid-cell">
+        <div class="grid-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></div>
+        <div class="grid-num" id="stats-zones">0</div>
+        <div class="grid-lbl">Zones Owned</div>
       </div>
-      <p class="timer-label">seconds remaining</p>
-    </div>
-  </div>
-
-  <!-- SCREEN 3 — LOGIN -->
-  <div id="screen-login" class="screen">
-    <div class="card">
-      <div class="logo-mark small">🔐</div>
-      <h2 class="headline small">Now sign in</h2>
-      <p class="sub">Type the password you just memorized.</p>
-      <div class="field-group">
-        <label for="login-username">Username</label>
-        <input id="login-username" type="text" readonly class="readonly-field" tabindex="-1" />
+      <div class="grid-cell">
+        <div class="grid-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="grid-num" id="stats-dist">0.0</div>
+        <div class="grid-lbl">km Covered</div>
       </div>
-      <div class="field-group">
-        <label for="login-password">Password</label>
-        <input id="login-password" type="text" placeholder="Type your password…"
-          autocomplete="off" autocorrect="off" autocapitalize="none"
-          spellcheck="false" maxlength="8" />
+      <div class="grid-cell">
+        <div class="grid-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="color:var(--g2)"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+        <div class="grid-num" id="stats-cals">0</div>
+        <div class="grid-lbl">Kcal Burned</div>
       </div>
-      <div id="char-indicators" class="char-indicators"
-        aria-live="polite" aria-label="Password match indicators"></div>
-      <p id="login-error" class="error-msg hidden">Incorrect password — keep trying!</p>
-      <button id="btn-login" class="btn btn-primary btn-full">Sign In</button>
+      <div class="grid-cell">
+        <div class="grid-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg></div>
+        <div class="grid-num" id="stats-rank">#—</div>
+        <div class="grid-lbl">Global Rank</div>
+      </div>
     </div>
+
+    <div class="sec-label">Run History</div>
+    <div id="hist-list">
+      <div class="empty">
+        <div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="empty-txt">No runs yet. Go claim some turf!</div>
+      </div>
+    </div>
+    <div style="height:16px"></div>
   </div>
 
-  <!-- SCREEN 4 — SUCCESS -->
-  <div id="screen-success" class="screen">
-    <canvas id="confetti-canvas"></canvas>
-    <div class="card success-card">
-      <div class="success-emoji">🎉</div>
-      <h2 class="success-headline">You nailed it!</h2>
-      <p class="success-sub">Wow — you have a <strong>great mind</strong>.</p>
-      <p class="success-detail">Not everyone can memorize a random 8-character password in 10 seconds.</p>
-      <button id="btn-play-again" class="btn btn-primary btn-full">Play Again</button>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="navTo('home')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span class="nav-label">Home</span>
+    </div>
+    <div class="nav-item" onclick="navTo('map')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      <span class="nav-label">Map</span>
+    </div>
+    <div class="nav-item active" onclick="navTo('stats')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span class="nav-label">Stats</span>
+    </div>
+    <div class="nav-item" onclick="navTo('leaderboard')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+      <span class="nav-label">Rank</span>
     </div>
   </div>
+</div>
 
-  <script>
+<!-- ============================================================
+     LEADERBOARD SCREEN
+============================================================ -->
+<div id="screen-leaderboard" class="screen">
+  <div class="lb-hero">
+    <div class="lb-hero-title">Leaderboard</div>
+    <div class="lb-hero-sub" id="lb-sub">Top territory warriors</div>
+  </div>
+  <div class="scroll">
+    <div id="lb-list">
+      <div class="empty"><div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg></div><div class="empty-txt">Loading warriors...</div></div>
+    </div>
+    <div style="height:16px"></div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="navTo('home')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span class="nav-label">Home</span>
+    </div>
+    <div class="nav-item" onclick="navTo('map')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      <span class="nav-label">Map</span>
+    </div>
+    <div class="nav-item" onclick="navTo('stats')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span class="nav-label">Stats</span>
+    </div>
+    <div class="nav-item active" onclick="navTo('leaderboard')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+      <span class="nav-label">Rank</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SHARE CARD MODAL
+============================================================ -->
+<div id="share-modal">
+  <div class="share-sheet">
+    <div class="share-handle"></div>
+    <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--g1);margin-bottom:14px;text-align:center">Share Activity</div>
+
+    <!-- Card carousel -->
+    <div class="card-carousel" id="card-carousel">
+      <div class="card-track" id="card-track">
+        <div class="share-canvas-wrap"><canvas id="share-canvas-0" width="540" height="675"></canvas></div>
+        <div class="share-canvas-wrap"><canvas id="share-canvas-1" width="540" height="675"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Dots -->
+    <div class="carousel-dots">
+      <div class="c-dot on" id="dot-0" onclick="goCard(0)"></div>
+      <div class="c-dot" id="dot-1" onclick="goCard(1)"></div>
+    </div>
+
+    <!-- Actions -->
+    <div class="share-actions">
+      <button class="share-action-btn" onclick="_('bg-picker').click()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Add Photo
+      </button>
+      <button class="share-action-btn" onclick="saveCard()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Save
+      </button>
+      <button class="share-action-btn" onclick="shareCard()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        Share
+      </button>
+    </div>
+
+    <button class="btn-close-share" onclick="closeShareModal()">Close</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     NORMAL RUN SUMMARY
+============================================================ -->
+<div id="normal-summary">
+  <div class="summary-sheet">
+    <div class="summary-handle"></div>
+    <div class="summary-ttl">Run Complete</div>
+    <div class="summary-grid">
+      <div class="summary-cell">
+        <div class="summary-num" id="sum-dist">0.00</div>
+        <div class="summary-lbl">km</div>
+      </div>
+      <div class="summary-cell">
+        <div class="summary-num" id="sum-time">00:00</div>
+        <div class="summary-lbl">Time</div>
+      </div>
+      <div class="summary-cell">
+        <div class="summary-num" id="sum-pace">--:--</div>
+        <div class="summary-lbl">Min/km</div>
+      </div>
+      <div class="summary-cell">
+        <div class="summary-num" id="sum-cals">0</div>
+        <div class="summary-lbl">kcal</div>
+      </div>
+    </div>
+    <!-- Share card canvas (hidden, used for save) -->
+    <canvas id="run-card-canvas" width="600" height="340" style="display:none"></canvas>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <button class="share-action-btn" onclick="saveNormalRunCard()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Save Image
+      </button>
+      <button class="share-action-btn" onclick="shareNormalRunCard()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        Share
+      </button>
+    </div>
+    <button class="btn-lime" onclick="closeNormalSummary()">Done</button>
+  </div>
+
+  <!-- Save Image popup confirmation -->
+  <div id="save-popup">
+    <div class="save-popup-inner">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#b8f24a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      <div class="save-popup-txt">
+        <div class="save-popup-title">Saved to Gallery</div>
+        <div class="save-popup-sub">Your run card has been saved</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     RUN TYPE PICKER
+============================================================ -->
+<div id="run-picker">
+  <div class="picker-sheet">
+    <div class="picker-handle"></div>
+    <div class="picker-ttl">Choose Run Type</div>
+    <div class="picker-opt" onclick="closeRunPicker();goRun('turf')">
+      <div class="picker-opt-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" stroke-width="2" stroke-linecap="round"><path d="M3 3h18v18H3z"/><path d="M9 9h6v6H9z"/></svg>
+      </div>
+      <div>
+        <div class="picker-opt-ttl">Claim Territory</div>
+        <div class="picker-opt-sub">Walk a closed loop to own land</div>
+      </div>
+    </div>
+    <div class="picker-opt" onclick="closeRunPicker();goRun('normal')">
+      <div class="picker-opt-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--g1)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <div>
+        <div class="picker-opt-ttl">Normal Run</div>
+        <div class="picker-opt-sub">Track distance, time and pace</div>
+      </div>
+    </div>
+    <div style="padding:16px 18px 0">
+      <button class="btn-ghost" onclick="closeRunPicker()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SETTINGS MODAL
+============================================================ -->
+<div id="settings-modal">
+  <div class="settings-sheet">
+    <div class="settings-handle"></div>
+    <div class="settings-header"><button class="settings-back" type="button" onclick="closeSettings()" aria-label="Close settings"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="settings-ttl">Settings</div><div style="width:40px"></div></div>
+
+    <!-- Profile -->
+    <div class="settings-sec">Profile</div>
+    <div class="settings-row">
+      <div class="settings-row-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div class="settings-name-row">
+        <input id="settings-name" class="settings-name-inp" type="text" placeholder="Display name" maxlength="20"/>
+        <button class="settings-save-btn" onclick="saveSettingsName()">Save</button>
+      </div>
+    </div>
+    <div class="color-row" id="color-swatches"></div>
+
+    <!-- Account -->
+    <div class="settings-sec">Account</div>
+    <div class="settings-row">
+      <div class="settings-row-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      </div>
+      <div class="settings-row-body">
+        <div class="settings-row-label">Email</div>
+        <div class="settings-row-sub" id="settings-email">—</div>
+      </div>
+    </div>
+    <div class="settings-row danger" onclick="signOut()" style="cursor:pointer">
+      <div class="settings-row-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </div>
+      <div class="settings-row-label">Sign Out</div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="settings-sec">Notifications</div>
+    <div class="settings-row">
+      <div class="settings-row-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </div>
+      <div class="settings-row-body">
+        <div class="settings-row-label">Steal Alerts</div>
+        <div class="settings-row-sub">Notify when someone takes your turf</div>
+      </div>
+      <label class="sw">
+        <input type="checkbox" id="sw-steal" onchange="saveSetting('stealAlerts',this.checked)">
+        <div class="sw-track"></div><div class="sw-thumb"></div>
+      </label>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </div>
+      <div class="settings-row-body">
+        <div class="settings-row-label">Background Service</div>
+        <div class="settings-row-sub">Check for steals while app is closed</div>
+      </div>
+      <label class="sw">
+        <input type="checkbox" id="sw-bg" onchange="saveSetting('bgService',this.checked)">
+        <div class="sw-track"></div><div class="sw-thumb"></div>
+      </label>
+    </div>
+
+    <!-- Data -->
+    <div class="settings-sec">Data</div>
+    <div class="settings-row" onclick="syncQueue();toast('Syncing...')" style="cursor:pointer">
+      <div class="settings-row-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </div>
+      <div class="settings-row-body">
+        <div class="settings-row-label">Sync Offline Territories</div>
+        <div class="settings-row-sub">Upload saved runs when connected</div>
+      </div>
+    </div>
+    <div class="settings-row danger" onclick="clearHistory()" style="cursor:pointer">
+      <div class="settings-row-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+      </div>
+      <div class="settings-row-label">Clear Run History</div>
+    </div>
+
+    <!-- App -->
+    <div class="settings-sec">App</div>
+    <div class="settings-row">
+      <div class="settings-row-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </div>
+      <div class="settings-row-body">
+        <div class="settings-row-label">Theme</div>
+      </div>
+      <label class="sw">
+        <input type="checkbox" id="sw-theme" onchange="toggleTheme(this.checked)">
+        <div class="sw-track"></div><div class="sw-thumb"></div>
+      </label>
+      <span style="font-size:12px;color:var(--g2);margin-left:4px" id="theme-label">Dark</span>
+    </div>
+    <div class="settings-row" style="border-bottom:none">
+      <div class="settings-row-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      </div>
+      <div class="settings-row-body">
+        <div class="settings-row-label">TurfWar</div>
+        <div class="settings-row-sub">Version 1.0.0</div>
+      </div>
+    </div>
+
+    <div style="padding:16px 18px 0">
+      <button class="btn-ghost" onclick="closeSettings()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SCRIPTS
+============================================================ -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+<script>
 'use strict';
-
-/* ─── State ─── */
-const state = { username: '', password: '', timerID: null, remaining: 10 };
-
-/* ─── DOM ─── */
-const screens = {
-  username: document.getElementById('screen-username'),
-  memorize: document.getElementById('screen-memorize'),
-  login:    document.getElementById('screen-login'),
-  success:  document.getElementById('screen-success'),
+/* ================================================================
+   FIREBASE CONFIG
+================================================================ */
+const FB_CFG = {
+  apiKey:            "AIzaSyDq2pFFfvBcHe8T57cUhHLPkG2VsrKglqs",
+  authDomain:        "secret-keeper-8.firebaseapp.com",
+  projectId:         "secret-keeper-8",
+  storageBucket:     "secret-keeper-8.firebasestorage.app",
+  messagingSenderId: "237581373337",
+  appId:             "1:237581373337:web:3cb8ad1662aacc9909cd08"
 };
 
-const usernameInput   = document.getElementById('username-input');
-const usernameError   = document.getElementById('username-error');
-const btnGenerate     = document.getElementById('btn-generate');
-const memorizeUname   = document.getElementById('memorize-username');
-const passwordDisplay = document.getElementById('password-display');
-const timerNumber     = document.getElementById('timer-number');
-const ringProgress    = document.getElementById('ring-progress');
-const loginUsername   = document.getElementById('login-username');
-const loginPassword   = document.getElementById('login-password');
-const loginError      = document.getElementById('login-error');
-const charIndicators  = document.getElementById('char-indicators');
-const btnLogin        = document.getElementById('btn-login');
-const btnPlayAgain    = document.getElementById('btn-play-again');
-const confettiCanvas  = document.getElementById('confetti-canvas');
-
-const CIRCUMFERENCE = 314.16; // 2π × r50
-
-/* ─── Helpers ─── */
-function generatePassword() {
-  const upper  = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-  const lower  = 'abcdefghjkmnpqrstuvwxyz';
-  const digits = '23456789';
-  const all    = upper + lower + digits;
-  const pick   = s => s[Math.floor(Math.random() * s.length)];
-  const chars  = [pick(upper), pick(lower), pick(digits)];
-  while (chars.length < 8) chars.push(pick(all));
-  for (let i = chars.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [chars[i], chars[j]] = [chars[j], chars[i]];
+/* ================================================================
+   APP STATE
+================================================================ */
+const A = {
+  user:     { name:'', uid:'', color:'' },
+  map:      null,
+  miniMap:  null,
+  mapReady: false,
+  miniReady:false,
+  runMode:  'turf',  // 'turf' | 'normal'
+  tracking: {
+    on:false, wid:null, path:[],
+    dist:0, t0:null, last:null, tick:null
+  },
+  ly: { player:null, path:null, terr:{}, mini:[] },
+  territories: [],
+  stealUnsub: null,
+  share: {
+    currentCard: 0,
+    customBg: null,
+    lastData: null
   }
-  return chars.join('');
+};
+
+let db = null, auth = null;
+let authResolved = false;
+
+/* ================================================================
+   SETTINGS
+================================================================ */
+const SETTINGS_KEY = 'tw_settings';
+let S = { stealAlerts:true, bgService:true, theme:'dark', color:'' };
+
+function loadSettings() {
+  try { Object.assign(S, JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}')); } catch(e) {}
+  applyTheme();
 }
 
-function goTo(to) {
-  const current = Object.values(screens).find(s => s.classList.contains('active'));
-  if (current) {
-    current.classList.add('exit');
-    current.classList.remove('active');
-    setTimeout(() => current.classList.remove('exit'), 350);
+function saveSetting(key, val) {
+  S[key] = val;
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(S));
+  if (key === 'bgService') {
+    val ? callBridge('startBackgroundChecks',[]) : callBridge('stopBackgroundChecks',[]);
   }
-  setTimeout(() => screens[to].classList.add('active'), current ? 280 : 0);
 }
 
-function showError(el, msg) {
-  el.textContent = msg;
-  el.classList.remove('hidden', 'shake');
-  void el.offsetWidth;
-  el.classList.add('shake');
+function applyTheme() {
+  const isLight = S.theme === 'light';
+  document.body.classList.toggle('light', isLight);
+  const sw = _('sw-theme');
+  if (sw) { sw.checked = isLight; }
+  const lbl = _('theme-label');
+  if (lbl) lbl.textContent = isLight ? 'Light' : 'Dark';
 }
 
-function hideError(el) { el.classList.add('hidden'); }
-
-/* ─── Screen 1: Username ─── */
-btnGenerate.addEventListener('click', handleGenerate);
-usernameInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleGenerate(); });
-usernameInput.addEventListener('input', () => hideError(usernameError));
-
-function handleGenerate() {
-  const raw = usernameInput.value.trim();
-  if (!raw) { showError(usernameError, 'Please enter a username first.'); usernameInput.focus(); return; }
-  state.username = raw;
-  state.password = generatePassword();
-  try { localStorage.setItem('pmc_username', state.username); localStorage.setItem('pmc_password', state.password); } catch (_) {}
-  setupMemorizeScreen();
-  goTo('memorize');
+function toggleTheme(isLight) {
+  S.theme = isLight ? 'light' : 'dark';
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(S));
+  applyTheme();
 }
 
-/* ─── Screen 2: Memorize ─── */
-function setupMemorizeScreen() {
-  memorizeUname.textContent = state.username;
-  passwordDisplay.innerHTML = '';
-  [...state.password].forEach((ch, i) => {
-    const span = document.createElement('span');
-    span.className = 'pwd-char';
-    span.textContent = ch;
-    span.style.animationDelay = `${i * 60}ms`;
-    passwordDisplay.appendChild(span);
+const COLORS = ['#C5F135','#FF6B6B','#4ECDC4','#FFD93D','#A29BFE',
+                '#FD79A8','#00CEC9','#6C5CE7','#55EFC4','#E17055'];
+
+function openSettings() {
+  // Populate name from all possible sources
+  const displayName = A.user.name || auth?.currentUser?.displayName || localStorage.getItem('tw_name') || '';
+  _('settings-name').value = displayName;
+  // Email
+  _('settings-email').textContent = auth?.currentUser?.email || 'Guest';
+  // Toggles
+  _('sw-steal').checked = S.stealAlerts !== false;
+  _('sw-bg').checked    = S.bgService   !== false;
+  _('sw-theme').checked = S.theme === 'light';
+  _('theme-label').textContent = S.theme === 'light' ? 'Light' : 'Dark';
+  // Color swatches
+  const cur = S.color || A.user.color;
+  _('color-swatches').innerHTML = COLORS.map(c =>
+    `<div class="color-swatch${c===cur?' sel':''}" style="background:${c}"
+      onclick="pickColor('${c}')"></div>`
+  ).join('');
+  _('settings-modal').classList.add('on');
+}
+
+async function saveSettingsName() {
+  const name = _('settings-name').value.trim();
+  if (name.length < 2) { toast('At least 2 characters'); return; }
+  if (name.length > 20) { toast('Max 20 characters'); return; }
+  A.user.name = name;
+  localStorage.setItem('tw_name', name);
+  try { await auth?.currentUser?.updateProfile({ displayName: name }); } catch(e) {}
+  _('home-av').textContent = name.charAt(0).toUpperCase();
+  toast('Name saved!');
+}
+
+function closeSettings() { _('settings-modal').classList.remove('on'); }
+
+function pickColor(c) {
+  S.color = c; A.user.color = c;
+  saveSetting('color', c);
+  // Update avatar
+  _('home-av').style.background = c;
+  // Refresh swatches
+  document.querySelectorAll('.color-swatch').forEach(el => {
+    el.classList.toggle('sel', el.style.background === c ||
+      `rgb(${hexToRgb(c)})` === el.style.background);
   });
-  state.remaining = 10;
-  updateTimerUI(10);
-  timerNumber.classList.remove('urgent', 'pulsing');
-  ringProgress.classList.remove('urgent');
-  if (state.timerID) clearInterval(state.timerID);
-  setTimeout(() => { state.timerID = setInterval(tickTimer, 1000); }, 800);
 }
 
-function tickTimer() {
-  state.remaining -= 1;
-  updateTimerUI(state.remaining);
-  if (state.remaining <= 3) {
-    timerNumber.classList.add('urgent', 'pulsing');
-    ringProgress.classList.add('urgent');
-  }
-  if (state.remaining <= 0) {
-    clearInterval(state.timerID);
-    state.timerID = null;
-    transitionToLogin();
-  }
+function hexToRgb(hex) {
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return `${r}, ${g}, ${b}`;
 }
 
-function updateTimerUI(s) {
-  timerNumber.textContent = s;
-  ringProgress.style.strokeDashoffset = CIRCUMFERENCE * (1 - s / 10);
+function clearHistory() {
+  if (!confirm('Clear all local run history?')) return;
+  localStorage.removeItem('tw_q');
+  localStorage.removeItem('tw_stats');
+  toast('Run history cleared');
 }
 
-function transitionToLogin() { setupLoginScreen(); goTo('login'); }
-
-/* ─── Screen 3: Login ─── */
-function setupLoginScreen() {
-  loginUsername.value = state.username;
-  loginPassword.value = '';
-  hideError(loginError);
-  renderIndicators('');
-  setTimeout(() => loginPassword.focus(), 450);
-}
-
-loginPassword.addEventListener('input', () => {
-  hideError(loginError);
-  renderIndicators(loginPassword.value);
-});
-
-function renderIndicators(typed) {
-  charIndicators.innerHTML = '';
-  for (let i = 0; i < 8; i++) {
-    const dot = document.createElement('div');
-    dot.className = 'char-dot';
-    if (i < typed.length) {
-      const ok = typed[i] === state.password[i];
-      dot.classList.add(ok ? 'correct' : 'wrong');
-      dot.textContent = ok ? '✅' : '❌';
-      dot.setAttribute('aria-label', ok ? 'correct' : 'wrong');
-    } else {
-      dot.classList.add('empty');
-      dot.setAttribute('aria-label', 'empty');
-    }
-    charIndicators.appendChild(dot);
-  }
-}
-
-loginPassword.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
-btnLogin.addEventListener('click', handleLogin);
-
-function handleLogin() {
-  const typed = loginPassword.value;
-  if (!typed.length) { showError(loginError, 'Type your password to continue.'); loginPassword.focus(); return; }
-  if (typed === state.password) {
-    goTo('success');
-    startConfetti();
-  } else {
-    showError(loginError, 'Incorrect password — keep trying!');
-    loginPassword.style.borderColor = '#EF4444';
-    loginPassword.style.boxShadow   = '0 0 0 3px rgba(239,68,68,.15)';
-    setTimeout(() => { loginPassword.style.borderColor = ''; loginPassword.style.boxShadow = ''; }, 600);
-    loginPassword.focus();
-  }
-}
-
-/* ─── Screen 4: Success + Confetti ─── */
-let confettiAnimID = null, confettiParticles = [];
-
-function startConfetti() {
-  const ctx = confettiCanvas.getContext('2d');
-  confettiCanvas.width  = window.innerWidth;
-  confettiCanvas.height = window.innerHeight;
-  const COLORS = ['#2563EB','#22C55E','#EF4444','#F59E0B','#A855F7','#EC4899'];
-  confettiParticles = Array.from({ length: 140 }, () => ({
-    x: Math.random() * confettiCanvas.width,
-    y: Math.random() * -confettiCanvas.height * 0.5,
-    vx: (Math.random() - 0.5) * 2.5,
-    vy: Math.random() * 3 + 2,
-    angle: Math.random() * Math.PI * 2,
-    spin:  (Math.random() - 0.5) * 0.18,
-    w:     Math.random() * 10 + 5,
-    h:     Math.random() * 6  + 4,
-    color: COLORS[Math.floor(Math.random() * COLORS.length)],
-    alpha: 1,
-  }));
-  if (confettiAnimID) cancelAnimationFrame(confettiAnimID);
-  (function frame() {
-    ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-    let alive = false;
-    confettiParticles.forEach(p => {
-      p.x += p.vx; p.y += p.vy; p.angle += p.spin; p.vy += 0.04;
-      if (p.y > confettiCanvas.height * 0.75) p.alpha = Math.max(0, p.alpha - 0.018);
-      if (p.alpha > 0) alive = true;
-      ctx.save();
-      ctx.globalAlpha = p.alpha;
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.angle);
-      ctx.fillStyle = p.color;
-      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-      ctx.restore();
-    });
-    if (alive) { confettiAnimID = requestAnimationFrame(frame); }
-    else ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-  })();
-}
-
-function stopConfetti() {
-  if (confettiAnimID) { cancelAnimationFrame(confettiAnimID); confettiAnimID = null; }
-  confettiCanvas.getContext('2d').clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-  confettiParticles = [];
-}
-
-btnPlayAgain.addEventListener('click', () => { stopConfetti(); resetGame(); goTo('username'); });
-
-function resetGame() {
-  state.username = ''; state.password = ''; state.remaining = 10;
-  if (state.timerID) { clearInterval(state.timerID); state.timerID = null; }
-  usernameInput.value = ''; loginPassword.value = '';
-  charIndicators.innerHTML = '';
-  hideError(usernameError); hideError(loginError);
-  try { localStorage.removeItem('pmc_username'); localStorage.removeItem('pmc_password'); } catch (_) {}
-}
-
-/* ─── History Lock ─── */
-history.pushState({ page: 'app' }, '');
-window.addEventListener('popstate', () => {
-  history.pushState({ page: 'app' }, '');
-  if (screens.memorize.classList.contains('active')) {
-    clearInterval(state.timerID);
-    transitionToLogin();
-  } else if (!screens.login.classList.contains('active')) {
-    resetGame(); goTo('username');
-  }
-});
-
-/* ─── Canvas Resize ─── */
-window.addEventListener('resize', () => {
-  if (screens.success.classList.contains('active')) {
-    confettiCanvas.width  = window.innerWidth;
-    confettiCanvas.height = window.innerHeight;
-  }
-});
-
-/* ─── Init ─── */
-(function init() {
+/* ================================================================
+   BOOT
+================================================================ */
+async function boot() {
+  loadSettings();
+  // Init Firebase
   try {
-    const u = localStorage.getItem('pmc_username');
-    const p = localStorage.getItem('pmc_password');
-    if (u && p) {
-      state.username = u; state.password = p;
-      setupLoginScreen(); goTo('login'); return;
+    firebase.initializeApp(FB_CFG);
+    db   = firebase.firestore();
+    auth = firebase.auth();
+    db.enableIndexedDbPersistence().catch(e => console.warn('Persist:', e.code));
+  } catch(e) {
+    console.warn('Firebase init failed:', e);
+  }
+
+  // Handle pending Google redirect (non-blocking)
+  if (auth) {
+    auth.getRedirectResult().catch(e => {
+      if (e.code && e.code !== 'auth/no-auth-event') {
+        console.warn('Google redirect error:', e.code);
+        if (e.code === 'auth/web-storage-unsupported' || e.code === 'auth/operation-not-supported-in-this-environment') {
+          setTimeout(() => toast('Google sign-in blocked. Use email instead.'), 1000);
+        }
+      }
+    });
+  }
+
+  startAuthListener();
+}
+
+/* ================================================================
+   AUTH LISTENER — central routing logic
+================================================================ */
+function startAuthListener() {
+  if (!auth) {
+    // Offline / Firebase failed — show auth screen
+    resolveAuth(); showScreen('auth'); return;
+  }
+
+  auth.onAuthStateChanged(async user => {
+    if (!authResolved) resolveAuth();
+
+    if (!user) {
+      showScreen('auth'); return;
     }
-  } catch (_) {}
-})();
-  </script>
+
+    // Email users must verify before entering
+    const isEmail = user.providerData.some(p => p.providerId === 'password');
+    if (isEmail && !user.emailVerified) {
+      _('verify-email').textContent = user.email;
+      showScreen('verify'); return;
+    }
+
+    // Store UID
+    A.user.uid   = user.uid;
+    A.user.color = S.color || colorFor(user.uid);
+    callBridge('saveDeviceId', [user.uid]);
+    callBridge('saveProjectId', [FB_CFG.projectId]);
+
+    // Resolve display name
+    const storedName = localStorage.getItem('tw_name');
+    const fbName     = user.displayName;
+    const name       = fbName || storedName || '';
+
+    if (!name) { showScreen('name'); return; }
+
+    A.user.name = name;
+    localStorage.setItem('tw_name', name);
+
+    // Go home
+    showScreen('home');
+    onHome().catch(e => console.warn('onHome:', e));
+    setupStealListener();
+    callBridge('startBackgroundChecks', []);
+    syncQueue();
+  });
+
+  // Emergency: if auth state hasn't resolved in 6s, show auth screen
+  setTimeout(() => {
+    if (!authResolved) { resolveAuth(); showScreen('auth'); }
+  }, 6000);
+}
+
+function resolveAuth() {
+  authResolved = true;
+  hideSplash();
+}
+
+/* ================================================================
+   AUTH ACTIONS
+================================================================ */
+let isSignUp = false;
+
+function switchAuthMode() {
+  isSignUp = !isSignUp;
+  // Hide verify banner when switching modes
+  const b = _('verify-banner'); if (b) b.style.display = 'none';
+  // Show/hide verification note
+  const note = _('auth-verify-note');
+  if (note) note.style.display = isSignUp ? 'block' : 'none';
+  _('confirm-wrap').style.display = isSignUp ? 'block' : 'none';
+  _('forgot-link').style.display  = isSignUp ? 'none'  : 'block';
+  _('auth-btn').textContent = isSignUp ? 'Create Account' : 'Sign In';
+  _('auth-switch').innerHTML = isSignUp
+    ? 'Already have an account? <span onclick="switchAuthMode()">Sign In</span>'
+    : "Don't have an account? <span onclick=\"switchAuthMode()\">Sign Up</span>";
+}
+
+async function submitAuth() {
+  const email = _('auth-email').value.trim();
+  const pass  = _('auth-pass').value;
+  if (!email) { toast('Enter your email'); return; }
+  if (!pass)  { toast('Enter your password'); return; }
+  if (!auth)  { toast('No internet connection'); return; }
+
+  _('auth-btn').textContent = 'Please wait...';
+  _('auth-btn').disabled = true;
+
+  try {
+    if (isSignUp) {
+      const conf = _('auth-confirm').value;
+      if (pass !== conf) { toast('Passwords do not match'); resetAuthBtn(); return; }
+      if (pass.length < 6) { toast('Password must be 6+ characters'); resetAuthBtn(); return; }
+      const cred = await auth.createUserWithEmailAndPassword(email, pass);
+      await cred.user.sendEmailVerification();
+      _('verify-email').textContent = email;
+      showScreen('verify');
+    } else {
+      const cred = await auth.signInWithEmailAndPassword(email, pass);
+      // If email not verified, show banner and stay on auth screen
+      if (cred.user && !cred.user.emailVerified) {
+        const isEmailProvider = cred.user.providerData.some(p => p.providerId === 'password');
+        if (isEmailProvider) {
+          const banner = _('verify-banner');
+          if (banner) banner.style.display = 'flex';
+          _('verify-email').textContent = email;
+          showScreen('verify');
+          resetAuthBtn(); return;
+        }
+      }
+      // onAuthStateChanged handles routing for verified users
+    }
+  } catch(e) {
+    const errs = {
+      'auth/user-not-found':    'No account found with this email.',
+      'auth/wrong-password':    'Incorrect password.',
+      'auth/email-already-in-use': 'Email already registered. Sign in instead.',
+      'auth/invalid-email':     'Invalid email address.',
+      'auth/too-many-requests': 'Too many attempts. Try again later.',
+      'auth/network-request-failed': 'No internet connection.'
+    };
+    toast(errs[e.code] || e.message);
+  }
+  resetAuthBtn();
+}
+
+function resetAuthBtn() {
+  const b = _('auth-btn');
+  b.disabled = false;
+  b.textContent = isSignUp ? 'Create Account' : 'Sign In';
+}
+
+async function signInGoogle() {
+  if (!auth) { toast('No internet connection'); return; }
+  try {
+    const prov = new firebase.auth.GoogleAuthProvider();
+    await auth.signInWithRedirect(prov);
+  } catch(e) {
+    toast('Google sign-in failed. Try email instead.');
+    console.warn('Google sign-in error:', e.code);
+  }
+}
+
+async function forgotPassword() {
+  const email = _('auth-email').value.trim();
+  if (!email) { toast('Enter your email first'); return; }
+  if (!auth)  { toast('No internet'); return; }
+  try {
+    await auth.sendPasswordResetEmail(email);
+    toast('Password reset email sent!', 3500);
+  } catch(e) {
+    toast(e.code === 'auth/user-not-found' ? 'No account with that email.' : e.message);
+  }
+}
+
+async function playAsGuest() {
+  if (!auth) { showScreen('name'); return; }
+  try {
+    await auth.signInAnonymously();
+    // onAuthStateChanged → no name → screen-name
+  } catch(e) {
+    showScreen('name');
+  }
+}
+
+// Email verification screen actions
+async function resendVerifyFromLogin() {
+  // Called from the verification banner on the sign-in page
+  if (!auth?.currentUser) {
+    toast('Please sign in first to resend verification');
+    return;
+  }
+  try {
+    await auth.currentUser.sendEmailVerification();
+    toast('Verification email sent! Check your inbox.');
+  } catch(e) {
+    toast(e.message || 'Could not send email');
+  }
+}
+
+async function checkVerifiedAnimated() {
+  // Show loading state
+  const btn = document.querySelector('#verify-actions .btn-lime');
+  if (btn) { btn.textContent = 'Checking...'; btn.disabled = true; }
+  await checkVerified();
+  if (btn) { btn.textContent = "I've Verified — Continue"; btn.disabled = false; }
+}
+
+async function checkVerified() {
+  if (!auth?.currentUser) return;
+  try {
+    await auth.currentUser.reload();
+    const user = auth.currentUser;
+    if (!user.emailVerified) {
+      toast('Not verified yet. Check your inbox.');
+      return;
+    }
+    // Show success animation briefly
+    const iconWrap = _('verify-icon-wrap');
+    const successWrap = _('verify-success-wrap');
+    const titleTxt = _('verify-title-txt');
+    if (iconWrap) iconWrap.style.display = 'none';
+    if (successWrap) { successWrap.style.display = 'flex'; }
+    if (titleTxt) titleTxt.textContent = 'Email Verified! ✓';
+    await new Promise(r => setTimeout(r, 1200));
+
+    // BUG FIX #4: authResolved and hideSplash were skipped on the verify path,
+    // causing the splash to persist or reappear when returning from email verification.
+    if (!authResolved) { authResolved = true; hideSplash(); }
+    A.user.uid = user.uid;
+    A.user.color = S.color || colorFor(user.uid);
+    const storedName = localStorage.getItem('tw_name');
+    const name = user.displayName || storedName || '';
+    if (!name) {
+      showScreen('name');
+      return;
+    }
+    A.user.name = name;
+    localStorage.setItem('tw_name', name);
+    showScreen('home');
+    onHome().catch(e => console.warn('onHome:', e));
+    setupStealListener();
+    callBridge('startBackgroundChecks', []);
+    syncQueue();
+  } catch(e) {
+    toast(e.message || 'Could not check verification status');
+  }
+}
+
+async function resendVerify() {
+  try { await auth.currentUser?.sendEmailVerification(); toast('Verification email sent!', 3000); }
+  catch(e) { toast(e.message); }
+}
+
+async function signOut() {
+  // FIX 3: Confirm before signing out
+  if (!confirm('Sign out of TurfWar?')) return;
+  closeSettings();
+  // BUG FIX #5: Show auth screen immediately — don't wait for Firebase
+  showScreen('auth');
+  try { await auth?.signOut(); } catch(e) {}
+  localStorage.removeItem('tw_name');
+  Object.assign(A.user, { name:'', uid:'', color:'' });
+  authResolved = false;
+}
+
+/* ================================================================
+   NAME SETUP
+================================================================ */
+async function saveName() {
+  const name = _('name-inp').value.trim();
+  if (name.length < 2) { toast('Enter at least 2 characters'); return; }
+  if (name.length > 20) { toast('Max 20 characters'); return; }
+
+  A.user.name = name;
+  localStorage.setItem('tw_name', name);
+
+  // Update Firebase displayName if logged in
+  try { await auth?.currentUser?.updateProfile({ displayName: name }); } catch(e) {}
+
+  // Create Firestore profile
+  await fsSet('users', A.user.uid || ('local_' + Date.now()), {
+    name, uid: A.user.uid, color: A.user.color,
+    totalArea:0, territoriesCount:0, totalDistance:0, totalCalories:0,
+    createdAt: sts(), lastSeen: sts()
+  }, true);
+
+  showScreen('home');
+  onHome().catch(e => console.warn(e));
+  setupStealListener();
+  callBridge('startBackgroundChecks', []);
+}
+
+function togglePass(inputId, eyeBtn) {
+  const inp = _(inputId);
+  const isText = inp.type === 'text';
+  inp.type = isText ? 'password' : 'text';
+  eyeBtn.style.color = isText ? 'var(--g2)' : 'var(--lime)';
+}
+
+/* ================================================================
+   SCREEN ROUTING
+================================================================ */
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  _('screen-' + name).classList.add('active');
+}
+
+async function navTo(name) {
+  showScreen(name);
+  if (name === 'home')        onHome().catch(e => console.warn(e));
+  if (name === 'map')         onMap().catch(e => console.warn(e));
+  if (name === 'stats')       onStats().catch(e => console.warn(e));
+  if (name === 'leaderboard') onLeaderboard().catch(e => console.warn(e));
+}
+
+/* ================================================================
+   HOME SCREEN
+================================================================ */
+async function onHome() {
+  _('home-av').textContent = A.user.name.charAt(0).toUpperCase();
+  _('home-av').style.background = A.user.color;
+
+  const u = await loadUserDoc();
+  _('home-area').textContent  = fmt(u.totalArea || 0);
+  _('home-zones').textContent = u.territoriesCount || 0;
+  _('home-dist').textContent  = ((u.totalDistance || 0) / 1000).toFixed(1);
+  _('home-cals').textContent  = u.totalCalories || 0;
+  _('home-rank').textContent  = '#' + await getRank(u.totalArea || 0);
+  // The reference Home screen is a dashboard rather than a map. Keep the
+  // map lifecycle isolated to the dedicated Map screen to avoid hidden-map
+  // sizing issues on mobile WebViews.
+  renderTerr();
+}
+
+/* ================================================================
+   MAP SCREEN
+================================================================ */
+async function onMap() {
+  if (!A.mapReady && typeof L !== 'undefined') {
+    A.mapReady = true;
+    await tick(80);
+    A.map = L.map('map', { zoomControl:false, attributionControl:true });
+    // Free OSM tiles, inverted via CSS to look dark (no API key required)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution:'© OpenStreetMap contributors', maxZoom:19
+    }).addTo(A.map);
+    centerOn(A.map, 16);
+  } else if (A.map) {
+    A.map.invalidateSize();
+  }
+  renderTerr();
+}
+
+function centerOn(map, zoom) {
+  if (!navigator.geolocation) { map.setView([20.5937,78.9629], zoom); return; }
+  navigator.geolocation.getCurrentPosition(
+    p => map.setView([p.coords.latitude, p.coords.longitude], zoom),
+    () => map.setView([20.5937,78.9629], zoom),
+    { enableHighAccuracy:true, timeout:5000 }
+  );
+}
+
+/* ================================================================
+   GPS TRACKING — WARMUP + TURF + NORMAL
+================================================================ */
+let warmupTimer = null;
+let warmupCount = 30;
+
+async function goRun(mode) {
+  A.runMode = mode;
+  await navTo('map');
+  await tick(350); // let map init
+  startWarmup(mode);
+}
+
+function startWarmup(mode) {
+  if (!navigator.geolocation) { toast('GPS not available'); return; }
+
+  A.runMode = mode;
+  _('map-ttl').textContent = mode === 'turf' ? 'TurfWar' : 'Normal Run';
+  _('track-area-cell').style.display = mode === 'turf' ? '' : 'none';
+
+  // Reset tracking state (on:false so onGPS skips path recording)
+  if (A.tracking.wid != null) {
+    navigator.geolocation.clearWatch(A.tracking.wid);
+    A.tracking.wid = null;
+  }
+  Object.assign(A.tracking, { on:false, path:[], dist:0, t0:null, last:null });
+  if (A.ly.path) { A.map?.removeLayer(A.ly.path); A.ly.path = null; }
+
+  // Start GPS early for lock-in
+  A.tracking.wid = navigator.geolocation.watchPosition(onGPS, onGPSErr,
+    { enableHighAccuracy:true, maximumAge:2000, timeout:20000 });
+
+  // Show overlay
+  warmupCount = 30;
+  _('warmup-count').textContent = '30';
+  _('warmup-overlay').classList.add('on');
+  _('track-status').textContent = 'Warming up...';
+  _('track-btn').textContent = 'Warming up...';
+  _('track-btn').className = 'track-btn go';
+  _('track-btn').disabled = true;
+
+  warmupTimer = setInterval(() => {
+    warmupCount--;
+    _('warmup-count').textContent = warmupCount;
+    if (warmupCount <= 0) {
+      clearInterval(warmupTimer);
+      warmupTimer = null;
+      endWarmup();
+    }
+  }, 1000);
+}
+
+function endWarmup() {
+  _('warmup-overlay').classList.remove('on');
+  _('track-btn').disabled = false;
+  if (A.runMode === 'turf') startTurfRun();
+  else startNormalRun();
+}
+
+function openRunPicker() { _('run-picker').classList.add('on'); }
+function closeRunPicker() { _('run-picker').classList.remove('on'); }
+
+function mapGoBack() {
+  // FIX 1: Back button on map/run screen
+  if (A.tracking.on) {
+    if (!confirm('Stop current run and go back?')) return;
+    A.runMode === 'normal' ? stopNormalRun() : stopRun();
+  } else if (warmupTimer) {
+    stopRun();
+  }
+  navTo('home');
+}
+
+function toggleTracking() {
+  if (A.tracking.on) {
+    // Active run — stop it
+    A.runMode === 'normal' ? stopNormalRun() : stopRun();
+  } else if (warmupTimer) {
+    // BUG FIX #7: Was re-opening the picker during warmup countdown.
+    // Tapping again during warmup should cancel the warmup instead.
+    stopRun();
+  } else {
+    // Idle — show run type picker
+    openRunPicker();
+  }
+}
+
+/* Pause / Resume */
+function togglePause() {
+  if (!A.tracking.on) return;
+  A.tracking.paused = !A.tracking.paused;
+
+  if (A.tracking.paused) {
+    A.tracking.pauseStart = Date.now();
+    clearInterval(A.tracking.tick); A.tracking.tick = null;
+    _('pause-icon').innerHTML = '<polygon points="5 3 19 12 5 21 5 3" fill="white"/>';
+    _('track-status').textContent = 'Paused — tap to resume';
+    _('stop-btn').textContent = 'Stop Run';
+  } else {
+    // Offset t0 so elapsed time doesn't count paused duration
+    if (A.tracking.pauseStart) {
+      A.tracking.t0 += (Date.now() - A.tracking.pauseStart);
+      A.tracking.pauseStart = null;
+    }
+    A.tracking.tick = setInterval(tickUI, 1000);
+    _('pause-icon').innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+    _('track-status').textContent = A.runMode === 'turf'
+      ? 'Walk a closed loop to claim territory...'
+      : 'Running — good pace!';
+  }
+}
+
+function startTurfRun() {
+  Object.assign(A.tracking, { on:true, path:[], dist:0, t0:Date.now(), last:null, paused:false, pauseStart:null });
+  _('track-btn').style.display = 'none';
+  _('run-controls').classList.add('on');
+  _('stop-btn').textContent = 'Stop Run';
+  _('track-status').textContent = 'Walk a closed loop to claim territory...';
+  _('track-area-cell').style.display = '';
+  A.tracking.tick = setInterval(tickUI, 1000);
+  toast('Run started — walk your loop!');
+}
+
+function startNormalRun() {
+  Object.assign(A.tracking, { on:true, path:[], dist:0, t0:Date.now(), last:null, paused:false, pauseStart:null });
+  _('track-btn').style.display = 'none';
+  _('run-controls').classList.add('on');
+  _('stop-btn').textContent = 'Finish Run';
+  _('track-status').textContent = 'Running — good pace!';
+  _('track-area-cell').style.display = 'none';
+  A.tracking.tick = setInterval(tickUI, 1000);
+  toast('Normal run started!');
+}
+
+function stopRun() {
+  A.tracking.on = false; A.tracking.paused = false;
+  if (A.tracking.wid != null) { navigator.geolocation.clearWatch(A.tracking.wid); A.tracking.wid = null; }
+  if (warmupTimer) { clearInterval(warmupTimer); warmupTimer = null; }
+  // Dismiss live run notification when run ends
+  callBridge('showNotification', ['TurfWar', 'Run complete! Check your stats.']);
+  _('warmup-overlay').classList.remove('on');
+  clearInterval(A.tracking.tick); A.tracking.tick = null;
+  _('run-controls').classList.remove('on');
+  _('track-btn').style.display = '';
+  _('track-btn').textContent = 'Start Run';
+  _('track-btn').className = 'track-btn go';
+  _('track-btn').disabled = false;
+  _('track-status').textContent = 'Tap Start Run to begin claiming territory';
+  _('track-area-cell').style.display = '';
+  setGPS(false);
+  toast('Run stopped');
+}
+
+function stopNormalRun() {
+  A.tracking.on = false; A.tracking.paused = false;
+  if (A.tracking.wid != null) { navigator.geolocation.clearWatch(A.tracking.wid); A.tracking.wid = null; }
+  clearInterval(A.tracking.tick); A.tracking.tick = null;
+
+  // Save path for share card BEFORE clearing
+  A.share.runPath = A.tracking.path.length > 1 ? [...A.tracking.path] : null;
+
+  const secs = A.tracking.t0 ? Math.floor((Date.now() - A.tracking.t0) / 1000) : 0;
+  const dist  = A.tracking.dist;
+  const cals  = Math.round(dist * 0.07);
+
+  _('sum-dist').textContent  = (dist/1000).toFixed(2);
+  _('sum-time').textContent  = pad(Math.floor(secs/60))+':'+pad(secs%60);
+  _('sum-pace').textContent  = paceFmt(dist, secs);
+  _('sum-cals').textContent  = cals;
+
+  // BUG FIX #3: Persist normal run stats (was missing entirely in original)
+  saveNormalRunStats(dist, cals);
+
+  _('normal-summary').classList.add('on');
+
+  _('run-controls').classList.remove('on');
+  _('track-btn').style.display = '';
+  _('track-btn').textContent = 'Start Run';
+  _('track-btn').className = 'track-btn go';
+  _('track-btn').disabled = false;
+  _('track-status').textContent = 'Tap Start Run to begin claiming territory';
+  _('map-ttl').textContent = 'TurfWar';
+  _('track-area-cell').style.display = '';
+  setGPS(false);
+  callBridge('vibrateDevice', []);
+}
+
+function closeNormalSummary() { _('normal-summary').classList.remove('on'); navTo('home'); }
+
+// BUG FIX #3: Original stopNormalRun() displayed the summary but never persisted stats.
+// Normal run distance/calories were lost on every session. Call updateStats here.
+async function saveNormalRunStats(dist, cals) {
+  try { await updateStats(0, dist, cals); } catch(e) { console.warn('saveNormalRunStats:', e); }
+}
+
+function drawNormalRunCard() {
+  const canvas = _('run-card-canvas');
+  canvas.width = 680; canvas.height = 360;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  // Background
+  ctx.fillStyle = '#0A0A0A'; ctx.fillRect(0,0,W,H);
+
+  // Lime top bar
+  ctx.fillStyle = '#C5F135'; ctx.fillRect(0,0,W,4);
+
+  // App name
+  ctx.fillStyle = '#C5F135';
+  ctx.font = 'bold 15px -apple-system,sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('TURFWAR', 28, 40);
+
+  // Run label
+  ctx.fillStyle = '#666666';
+  ctx.font = '700 11px -apple-system,sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText('NORMAL RUN', W-28, 40);
+
+  // Stats — left column (320px wide)
+  const stats = [
+    { label:'DISTANCE', val: _('sum-dist').textContent + ' km' },
+    { label:'TIME',     val: _('sum-time').textContent },
+    { label:'PACE',     val: _('sum-pace').textContent + '/km' },
+    { label:'CALORIES', val: _('sum-cals').textContent + ' kcal' }
+  ];
+  const colW = 320, rowH = (H-60)/2;
+  stats.forEach((s,i) => {
+    const cx = (i%2) * (colW/2) + colW/4 + 14;
+    const cy = 70 + Math.floor(i/2) * rowH + rowH/2;
+    ctx.fillStyle = '#C5F135';
+    ctx.font = 'bold 26px -apple-system,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(s.val, cx, cy);
+    ctx.fillStyle = '#444';
+    ctx.font = '600 9px -apple-system,sans-serif';
+    ctx.fillText(s.label, cx, cy+18);
+  });
+
+  // Vertical divider
+  ctx.strokeStyle='#1A1A1A'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(colW,60); ctx.lineTo(colW,H-20); ctx.stroke();
+  // Horizontal mid divider (left side)
+  ctx.beginPath(); ctx.moveTo(14,60+rowH); ctx.lineTo(colW-14,60+rowH); ctx.stroke();
+
+  // Path visualization — right side
+  const pathData = A.share.runPath;
+  const RX = colW+14, RY = 60, RW = W-colW-28, RH = H-80;
+
+  if (pathData && pathData.length >= 2) {
+    // Bounding box
+    let minLat=Infinity, maxLat=-Infinity, minLng=Infinity, maxLng=-Infinity;
+    pathData.forEach(([lat,lng]) => {
+      if(lat<minLat) minLat=lat; if(lat>maxLat) maxLat=lat;
+      if(lng<minLng) minLng=lng; if(lng>maxLng) maxLng=lng;
+    });
+    const latR=maxLat-minLat||0.001, lngR=maxLng-minLng||0.001;
+    const scale = Math.min(RW/lngR, RH/latR)*0.8;
+    const padX = (RW - lngR*scale)/2;
+    const padY = (RH - latR*scale)/2;
+    const toX = lng => RX + padX + (lng-minLng)*scale;
+    const toY = lat => RY + padY + (maxLat-lat)*scale;
+
+    // Glow
+    ctx.shadowColor='#C5F135'; ctx.shadowBlur=8;
+    ctx.strokeStyle='#C5F135'; ctx.lineWidth=2.5;
+    ctx.lineJoin='round'; ctx.lineCap='round';
+    ctx.beginPath();
+    pathData.forEach(([lat,lng],i) => {
+      i===0 ? ctx.moveTo(toX(lng),toY(lat)) : ctx.lineTo(toX(lng),toY(lat));
+    });
+    ctx.stroke();
+    ctx.shadowBlur=0;
+
+    // Start dot
+    ctx.fillStyle='#34C759';
+    ctx.beginPath(); ctx.arc(toX(pathData[0][1]),toY(pathData[0][0]),5,0,Math.PI*2); ctx.fill();
+    // End dot
+    ctx.fillStyle='#FF3B30';
+    const last=pathData[pathData.length-1];
+    ctx.beginPath(); ctx.arc(toX(last[1]),toY(last[0]),5,0,Math.PI*2); ctx.fill();
+  } else {
+    // No path placeholder
+    ctx.fillStyle='#1A1A1A';
+    ctx.fillRect(RX, RY, RW, RH);
+    ctx.fillStyle='#333';
+    ctx.font='600 11px -apple-system,sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText('No path recorded', RX+RW/2, RY+RH/2);
+  }
+
+  // Name bottom left
+  ctx.shadowBlur=0;
+  ctx.textAlign='left'; ctx.fillStyle='#333';
+  ctx.font='600 11px -apple-system,sans-serif';
+  ctx.fillText(A.user.name || 'Runner', 28, H-6);
+}
+
+function saveNormalRunCard() {
+  drawNormalRunCard();
+  const b64 = _('run-card-canvas').toDataURL('image/png');
+  if (window.Android?.saveImageToGallery) {
+    window.Android.saveImageToGallery(b64);
+    showSavePopup();
+  } else {
+    const a = document.createElement('a');
+    a.href=b64; a.download='turfwar_run_'+Date.now()+'.png'; a.click();
+    showSavePopup();
+  }
+}
+
+function showSavePopup() {
+  const popup = _('save-popup');
+  if (!popup) return;
+  popup.classList.add('on');
+  setTimeout(() => popup.classList.remove('on'), 2800);
+}
+
+function shareNormalRunCard() {
+  drawNormalRunCard();
+  const b64 = _('run-card-canvas').toDataURL('image/png');
+  if (window.Android?.shareImage) {
+    window.Android.shareImage(b64);
+  } else {
+    toast('Share not available — try Save Image instead');
+  }
+}
+
+function onGPS(pos) {
+  const { latitude:lat, longitude:lng, accuracy:acc } = pos.coords;
+  setGPS(true, acc);
+  moveDot(lat, lng);
+  // Update warmup GPS indicator
+  const wDot = _('warmup-gps-dot');
+  if (wDot) { wDot.className = acc < 20 ? 'ok' : ''; }
+  if (!A.tracking.on) return;
+  if (A.tracking.paused) return; // don't record while paused
+
+  const pt = [lat, lng];
+
+  // Smoothing filter
+  // BUG FIX #8: Original code only pushed to path inside the A.tracking.last block,
+  // so the very first GPS point was NEVER recorded. Push first point unconditionally.
+  if (A.tracking.last) {
+    const d = distM(A.tracking.last, pt);
+    if (d < 5 || d > 100) return; // ignore jitter and GPS jumps
+    A.tracking.dist += d;
+    A.tracking.path.push(pt);
+  } else {
+    A.tracking.path.push(pt); // always capture the first point
+  }
+  A.tracking.last = pt;
+
+  drawPath();
+
+  // Live area preview
+  if (A.tracking.path.length >= 4) {
+    try {
+      const area = turf.area(turf.polygon([geoRing(A.tracking.path)]));
+      _('track-area').textContent = Math.round(area);
+    } catch(e) {}
+  }
+
+  // Pan map
+  if (A.map) {
+    const c = A.map.getCenter();
+    if (distM([c.lat,c.lng], pt) > 400) A.map.panTo(pt, { animate:true });
+  }
+
+  // Loop closure: 10+ points, 200m+ walked, within 20m of start — turf mode only
+  if (A.runMode === 'turf' && A.tracking.path.length >= 10 && A.tracking.dist >= 200) {
+    const dStart = distM(A.tracking.path[0], pt);
+    if (dStart <= 20) {
+      onLoopClosed(); return;
+    }
+    _('track-status').textContent = Math.round(dStart) + 'm from start — return to close loop';
+  }
+  tickUI();
+}
+
+function onGPSErr(err) {
+  setGPS(false);
+  const m = { 1:'Location permission denied', 2:'GPS signal lost', 3:'GPS timeout — retrying' };
+  toast(m[err.code] || 'GPS error');
+}
+
+function moveDot(lat, lng) {
+  if (!A.map) return;
+  const icon = L.divIcon({ className:'', iconSize:[14,14], iconAnchor:[7,7],
+    html:'<div class="gps-pulse"></div>' });
+  if (!A.ly.player) A.ly.player = L.marker([lat,lng],{icon,zIndexOffset:1000}).addTo(A.map);
+  else A.ly.player.setLatLng([lat,lng]);
+}
+
+function drawPath() {
+  if (!A.map || A.tracking.path.length < 2) return;
+  const style = { color:'#C5F135', weight:3.5, opacity:0.9, lineJoin:'round' };
+  if (!A.ly.path) A.ly.path = L.polyline(A.tracking.path, style).addTo(A.map);
+  else A.ly.path.setLatLngs(A.tracking.path);
+}
+
+function tickUI() {
+  if (!A.tracking.t0) return;
+  const s = Math.floor((Date.now() - A.tracking.t0) / 1000);
+  _('track-time').textContent = pad(Math.floor(s/60))+':'+pad(s%60);
+  _('track-dist').textContent = (A.tracking.dist/1000).toFixed(2);
+  _('track-pace').textContent = paceFmt(A.tracking.dist, s);
+
+  // Live Android notification every 10 seconds while running
+  // Shows current stats in the notification shade
+  if (s > 0 && s % 10 === 0) {
+    const km   = (A.tracking.dist / 1000).toFixed(2);
+    const time = pad(Math.floor(s/60)) + ':' + pad(s%60);
+    const pace = paceFmt(A.tracking.dist, s);
+    const mode = A.runMode === 'turf' ? 'Claiming Territory' : 'Running';
+    const body = km + ' km  •  ' + time + '  •  ' + pace + ' min/km';
+    callBridge('showNotification', [mode + ' 🏃', body]);
+  }
+}
+
+function paceFmt(distM, secs) {
+  // BUG FIX #9: Standardised no-data string to '--:--' everywhere.
+  // Original had '--:--' here but '—:——' (em-dashes) in HTML initial values — inconsistent.
+  if (!distM || distM < 50) return '--:--';
+  const spk = secs / (distM / 1000);
+  return pad(Math.floor(spk / 60)) + ':' + pad(Math.floor(spk % 60));
+}
+
+/* ================================================================
+   LOOP CLOSURE → TERRITORY CLAIM
+================================================================ */
+async function onLoopClosed() {
+  const path     = [...A.tracking.path];
+  const dist     = A.tracking.dist;
+  const duration = Date.now() - A.tracking.t0;
+  stopRun();
+
+  // Flash loop toast
+  const lt = _('loop-toast');
+  lt.style.display = 'block';
+  setTimeout(() => { lt.style.display = 'none'; }, 3000);
+
+  if (path.length < 4) { toast('Loop too small — walk more'); return; }
+
+  const ring = geoRing(path);
+  let poly;
+  try { poly = turf.polygon([ring]); }
+  catch(e) { toast('Invalid shape — try a smoother route'); return; }
+
+  if (turf.kinks(poly).features.length > 0) {
+    toast('Path crosses itself — walk without crossing'); return;
+  }
+
+  const area = Math.round(turf.area(poly));
+  if (area < 100) { toast('Territory < 100m² — walk a bigger loop'); return; }
+
+  const simple  = turf.simplify(poly, { tolerance:0.0001, highQuality:false });
+  const coords  = simple.geometry.coordinates[0];
+  if (coords.length < 4) { toast('Simplified shape too small'); return; }
+
+  const center  = turf.centroid(poly).geometry.coordinates;
+  const calories= Math.round(dist * 0.07);
+  const dur     = Math.round(duration / 1000);
+
+  const doc = {
+    owner: A.user.name, uid: A.user.uid, color: A.user.color,
+    // legacy field for background service
+    deviceId: A.user.uid,
+    coordinates: coords, area,
+    distance: Math.round(dist), duration: dur, calories,
+    centerLat: center[1], centerLng: center[0],
+    createdAt: sts(), updatedAt: sts()
+  };
+
+  _('track-status').textContent = 'Saving territory...';
+
+  try {
+    if (db) {
+      await claimTerritory(doc, poly);
+      await updateStats(area, dist, calories);
+    } else {
+      saveOffline(doc);
+      toast('Saved offline — will sync when connected');
+    }
+
+    // Prepare share card data
+    A.share.lastData = { area, dist, duration: dur, cals: calories,
+      coords, color: A.user.color };
+
+    callBridge('vibrateDevice', []);
+    renderTerr();
+    _('track-status').textContent = 'Territory claimed! ✓';
+    toast('Territory saved! ' + fmt(area) + 'm² claimed', 3500);
+
+    // Flash then open share modal
+    const flash = _('claim-flash');
+    flash.classList.add('on');
+    setTimeout(() => { flash.classList.remove('on'); openShareModal(); }, 600);
+
+  } catch(e) {
+    console.error('Claim failed:', e);
+    saveOffline(doc);
+    _('track-status').textContent = 'Saved offline — will sync later';
+    toast('No connection — saved offline, will sync when back online', 4000);
+  }
+}
+
+/* ================================================================
+   TERRITORY CLAIM WITH STEAL LOGIC
+================================================================ */
+async function claimTerritory(data, newPoly) {
+  const nearby = await fetchNearby(data.centerLat, data.centerLng, 3);
+  const batch  = db.batch();
+  const stolen = [];
+
+  for (const t of nearby) {
+    if (t.uid === A.user.uid || t.deviceId === A.user.uid) continue;
+    if (!t.coordinates || t.coordinates.length < 4) continue;
+
+    let oldPoly, curPoly;
+    try { oldPoly = turf.polygon([t.coordinates]); } catch(e) { continue; }
+    try { curPoly = turf.polygon([data.coordinates]); } catch(e) { continue; }
+
+    let inter;
+    try { inter = turf.intersect(curPoly, oldPoly); } catch(e) { continue; }
+    if (!inter) continue;
+
+    const interArea = Math.round(turf.area(inter));
+    if (interArea < 10) continue;
+
+    let rem;
+    try { rem = turf.difference(oldPoly, curPoly); } catch(e) { continue; }
+
+    const ref = db.collection('territories').doc(t.id);
+
+    if (!rem) {
+      batch.delete(ref);
+    } else {
+      let keepCoords = null, keepArea = 0;
+      if (rem.geometry.type === 'MultiPolygon') {
+        for (const rings of rem.geometry.coordinates) {
+          try {
+            const piece = turf.polygon(rings);
+            const a = turf.area(piece);
+            if (a > keepArea) { keepArea = a; keepCoords = rings[0]; }
+          } catch(e) {}
+        }
+      } else {
+        keepCoords = rem.geometry.coordinates[0];
+        keepArea   = turf.area(rem);
+      }
+
+      if (!keepCoords || keepCoords.length < 4 || keepArea < 10) {
+        batch.delete(ref);
+      } else {
+        const sRem = turf.simplify(turf.polygon([keepCoords]),{tolerance:0.0001});
+        const sc   = turf.centroid(sRem).geometry.coordinates;
+        batch.update(ref, {
+          coordinates: sRem.geometry.coordinates[0],
+          area: Math.round(keepArea),
+          centerLat: sc[1], centerLng: sc[0], updatedAt: sts()
+        });
+        batch.update(db.collection('users').doc(t.uid || t.deviceId), {
+          totalArea: firebase.firestore.FieldValue.increment(-interArea)
+        });
+      }
+    }
+
+    stolen.push({ name: t.owner, area: interArea });
+    batch.set(db.collection('steals').doc(), {
+      stolenFrom: t.uid || t.deviceId, stolenFromName: t.owner,
+      stolenBy: A.user.uid, stolenByName: A.user.name,
+      area: interArea, timestamp: sts(), notified: false
+    });
+  }
+
+  batch.set(db.collection('territories').doc(), data);
+  await batch.commit();
+
+  if (stolen.length > 0) {
+    const names = stolen.map(s=>s.name).slice(0,2).join(', ');
+    setTimeout(() => toast('Stole from: ' + names + '!'), 1800);
+  }
+}
+
+/* ================================================================
+   FETCH + RENDER TERRITORIES
+================================================================ */
+async function fetchNearby(lat, lng, km=5) {
+  if (!db) return JSON.parse(localStorage.getItem('tw_cache')||'[]');
+  const dLat = km/111;
+  const dLng = km/(111*Math.cos(lat*Math.PI/180));
+  try {
+    const snap = await db.collection('territories')
+      .where('centerLat','>=',lat-dLat).where('centerLat','<=',lat+dLat).get();
+    const out = [];
+    snap.forEach(doc => {
+      const d = doc.data();
+      if (d.centerLng >= lng-dLng && d.centerLng <= lng+dLng) out.push({id:doc.id,...d});
+    });
+    return out;
+  } catch(e) { return JSON.parse(localStorage.getItem('tw_cache')||'[]'); }
+}
+
+async function renderTerr() {
+  let lat=20.5937, lng=78.9629;
+  try {
+    const p = await new Promise((ok,fail)=>
+      navigator.geolocation.getCurrentPosition(ok,fail,{timeout:4000}));
+    lat=p.coords.latitude; lng=p.coords.longitude;
+  } catch(e) {}
+  const list = await fetchNearby(lat,lng);
+  A.territories = list;
+  try { localStorage.setItem('tw_cache', JSON.stringify(list)); } catch(e) {}
+  drawOnMap(A.map, list, A.ly.terr, true);
+  // BUG FIX #6: A.miniMap is always null — the mini-map element was removed in the
+  // Home screen redesign. drawOnMap(A.miniMap,...) was a no-op but still triggered
+  // the geolocation call in renderTerr() unnecessarily on every Home load.
+  // Removed the dead drawOnMap(A.miniMap,...) call.
+}
+
+function drawOnMap(map, list, store, labels) {
+  if (!map) return;
+  if (store) {
+    Object.values(store).forEach(l=>{try{map.removeLayer(l);}catch(e){}});
+    Object.keys(store).forEach(k=>delete store[k]);
+  } else {
+    A.ly.mini.forEach(l=>{try{map.removeLayer(l);}catch(e){}});
+    A.ly.mini=[];
+  }
+  const bounds=[];
+  list.forEach(t=>{
+    if(!t.coordinates||t.coordinates.length<4) return;
+    const ll = t.coordinates.map(c=>[c[1],c[0]]);
+    ll.forEach(p=>bounds.push(p));
+    const isMe = t.uid===A.user.uid || t.deviceId===A.user.uid;
+    const clr  = t.color||colorFor(t.uid||t.deviceId||'');
+    const layer = L.polygon(ll,{
+      color:clr, fillColor:clr,
+      fillOpacity: isMe?0.4:0.25,
+      weight: isMe?2.5:1.5, opacity:0.9
+    }).addTo(map);
+    if(labels&&store){
+      layer.bindPopup('<b style="color:#fff">'+t.owner+'</b><br><span style="color:#aaa">'+fmt(t.area)+'m²</span>');
+      store[t.id]=layer;
+      const cx=ll.reduce((s,p)=>s+p[0],0)/ll.length;
+      const cy=ll.reduce((s,p)=>s+p[1],0)/ll.length;
+      const lbl=L.marker([cx,cy],{
+        icon:L.divIcon({
+          className:'',
+          html:'<span style="font-size:10px;font-weight:700;color:#fff;background:rgba(0,0,0,0.55);padding:2px 6px;border-radius:4px;white-space:nowrap">'+t.owner+'</span>',
+          iconAnchor:[30,8]
+        }),interactive:false
+      }).addTo(map);
+      store[t.id+'_l']=lbl;
+    } else {
+      A.ly.mini.push(layer);
+    }
+  });
+  if(!labels&&bounds.length>1){try{map.fitBounds(bounds,{padding:[10,10]});}catch(e){}}
+}
+
+/* ================================================================
+   STEAL LISTENER (real-time, while app is open)
+================================================================ */
+function setupStealListener() {
+  if (!db || A.stealUnsub || !A.user.uid) return;
+  let first=true;
+  A.stealUnsub = db.collection('steals')
+    .where('stolenFrom','==',A.user.uid)
+    .onSnapshot(snap=>{
+      if(first){first=false;return;}
+      snap.docChanges().forEach(ch=>{
+        if(ch.type!=='added') return;
+        const d=ch.doc.data();
+        toast(d.stolenByName+' stole '+fmt(d.area)+'m² from you!', 4000);
+        callBridge('showStealNotification',[d.stolenByName,String(d.area)]);
+        renderTerr();
+        ch.doc.ref.update({notified:true}).catch(()=>{});
+      });
+    }, e=>console.warn('Steal listener:', e));
+}
+
+/* ================================================================
+   STATS SCREEN
+================================================================ */
+async function onStats() {
+  const u = await loadUserDoc();
+  _('stats-area').textContent  = u.totalArea||0;
+  _('stats-zones').textContent = u.territoriesCount||0;
+  _('stats-dist').textContent  = ((u.totalDistance||0)/1000).toFixed(1);
+  _('stats-cals').textContent  = u.totalCalories||0;
+  _('stats-rank').textContent  = '#'+await getRank(u.totalArea||0);
+  loadHistory();
+}
+
+async function loadHistory() {
+  const el = _('hist-list');
+  if (!db) { el.innerHTML='<div class="empty"><div class="empty-txt">History needs internet</div></div>'; return; }
+  try {
+    const snap = await db.collection('territories').where('uid','==',A.user.uid).get();
+    if(snap.empty){
+      el.innerHTML='<div class="empty"><div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></div><div class="empty-txt">No runs yet. Go claim some turf!</div></div>';
+      return;
+    }
+    const rows=[];
+    snap.forEach(doc=>rows.push({id:doc.id,...doc.data()}));
+    rows.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    el.innerHTML=rows.slice(0,20).map(r=>{
+      const date=r.createdAt?.seconds?new Date(r.createdAt.seconds*1000).toLocaleDateString('en',{month:'short',day:'numeric'}):'Offline';
+      return `<div class="hist-item">
+        <div class="hist-dot" style="background:${A.user.color}"></div>
+        <div class="hist-info">
+          <div class="hist-main">${fmt(r.area)}m²</div>
+          <div class="hist-sub">${date} · ${((r.distance||0)/1000).toFixed(2)}km · ${r.calories||0}kcal</div>
+        </div>
+        <div class="hist-val">${Math.round((r.duration||0)/60)}min</div>
+      </div>`;
+    }).join('');
+  } catch(e){
+    el.innerHTML='<div class="empty"><div class="empty-txt">Could not load history</div></div>';
+  }
+}
+
+/* ================================================================
+   LEADERBOARD
+================================================================ */
+async function onLeaderboard() {
+  const el=_('lb-list');
+  if(!db){el.innerHTML='<div class="empty"><div class="empty-txt">Leaderboard needs internet</div></div>';return;}
+  try{
+    const snap=await db.collection('users').orderBy('totalArea','desc').limit(50).get();
+    if(snap.empty){el.innerHTML='<div class="empty"><div class="empty-txt">No warriors yet — be the first!</div></div>';return;}
+    const medals=['1st','2nd','3rd'];
+    let rank=1,myRank=0,html='';
+    snap.forEach(doc=>{
+      const d=doc.data(), me=(doc.id===A.user.uid);
+      if(me)myRank=rank;
+      const clr=d.color||colorFor(doc.id);
+      const badge=rank<=3?medals[rank-1]:'#'+rank;
+      html+=`<div class="lb-full-item${me?' me':''}">
+        <div class="lb-rank${rank<=3?' top':''}">${badge}</div>
+        <div class="lb-full-av" style="background:${clr}">${(d.name||'?').charAt(0).toUpperCase()}</div>
+        <div class="lb-full-info">
+          <div class="lb-full-nm">${d.name||'Unknown'}${me?' ◀':''}</div>
+          <div class="lb-full-zones">${d.territoriesCount||0} zones</div>
+        </div>
+        <div class="lb-full-area">${fmt(d.totalArea||0)}<span style="font-size:11px;color:var(--g2)"> m²</span></div>
+      </div>`;
+      rank++;
+    });
+    el.innerHTML=html;
+    if(myRank)_('lb-sub').textContent='You are ranked #'+myRank;
+  }catch(e){el.innerHTML='<div class="empty"><div class="empty-txt">Could not load leaderboard</div></div>';}
+}
+
+// BUG FIX #1: loadMiniLB() referenced element 'home-lb' which does not exist
+// in the HTML. It was also never called anywhere. Removed to prevent silent crashes.
+
+/* ================================================================
+   SHARE CARD
+================================================================ */
+function openShareModal() {
+  A.share.currentCard = 0;
+  _('share-modal').classList.add('on');
+  generateCards();
+}
+
+function closeShareModal() { _('share-modal').classList.remove('on'); }
+
+function goCard(idx) {
+  A.share.currentCard = idx;
+  _('card-track').style.transform = `translateX(${-idx*100}%)`;
+  // BUG FIX #13: Was hardcoded to [0,1] — now driven by actual dot count
+  // so adding more cards in future won't silently break dot updates.
+  document.querySelectorAll('.c-dot').forEach((dot, i) => {
+    dot.classList.toggle('on', i === idx);
+  });
+}
+
+// Touch swipe for carousel
+let swipeX = 0;
+_('card-carousel').addEventListener('touchstart', e => { swipeX = e.touches[0].clientX; }, {passive:true});
+_('card-carousel').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - swipeX;
+  if (dx < -40 && A.share.currentCard === 0) goCard(1);
+  if (dx >  40 && A.share.currentCard === 1) goCard(0);
+}, {passive:true});
+
+function generateCards() {
+  const d = A.share.lastData;
+  if (!d) return;
+  drawStatsCard(d, _('share-canvas-0'));
+  drawMapCard(d, _('share-canvas-1'));
+}
+
+function drawStatsCard(d, canvas) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  // Background
+  if (A.share.customBg) {
+    const img = new Image();
+    img.onload = () => {
+      // Draw image covering canvas
+      const r = Math.max(W/img.width, H/img.height);
+      const iw = img.width*r, ih = img.height*r;
+      ctx.drawImage(img, (W-iw)/2, (H-ih)/2, iw, ih);
+      // Dark overlay
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.fillRect(0,0,W,H);
+      drawStatsContent(ctx, W, H, d);
+    };
+    img.src = A.share.customBg;
+  } else {
+    // Solid dark with subtle gradient
+    const grad = ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,'#0D0D0D');
+    grad.addColorStop(1,'#000000');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,W,H);
+    drawStatsContent(ctx, W, H, d);
+  }
+}
+
+function drawStatsContent(ctx, W, H, d) {
+  // Lime accent line at top
+  ctx.fillStyle = '#C5F135';
+  ctx.fillRect(0, 0, W, 4);
+
+  // App name
+  ctx.fillStyle = '#C5F135';
+  ctx.font = 'bold 18px -apple-system,sans-serif';
+  // BUG FIX #11: ctx.letterSpacing removed — not a valid Canvas 2D API (CSS-only).
+  ctx.fillText('TURFWAR', 32, 52);
+
+  // Big area number (center)
+  const areaStr = fmt(d.area) + 'm²';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 76px -apple-system,sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(areaStr, W/2, H*0.38);
+
+  ctx.fillStyle = '#AAAAAA';
+  ctx.font = '500 16px -apple-system,sans-serif';
+  ctx.fillText('TERRITORY CLAIMED', W/2, H*0.38 + 32);
+
+  // Stat row
+  const stats = [
+    { label:'DISTANCE', val:(d.dist/1000).toFixed(2)+'km' },
+    { label:'TIME',     val:pad(Math.floor(d.duration/60))+':'+pad(d.duration%60) },
+    { label:'CALORIES', val:d.cals+'kcal' }
+  ];
+
+  const startX = 40;
+  const cellW  = (W - 80) / 3;
+  const y = H * 0.58;
+
+  // Divider
+  ctx.strokeStyle = '#222';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(32, y-20); ctx.lineTo(W-32, y-20); ctx.stroke();
+
+  stats.forEach((s, i) => {
+    const cx = startX + cellW*i + cellW/2;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 22px -apple-system,sans-serif';
+      ctx.textAlign = 'center';
+    ctx.fillText(s.val, cx, y + 6);
+    ctx.fillStyle = '#555555';
+    ctx.font = '600 11px -apple-system,sans-serif';
+      ctx.fillText(s.label, cx, y + 26);
+  });
+
+  // Bottom divider
+  ctx.strokeStyle = '#222';
+  ctx.beginPath(); ctx.moveTo(32, y+46); ctx.lineTo(W-32, y+46); ctx.stroke();
+
+  // User name
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#555555';
+  ctx.font = '600 13px -apple-system,sans-serif';
+  ctx.fillText(A.user.name, 32, H - 36);
+
+  // Reset
+  ctx.textAlign = 'left';
+}
+
+function drawMapCard(d, canvas) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  // Background
+  // BUG FIX #12: Original code defined a bg() closure but never called it in the
+  // non-customBg branch. The canvas got filled black only by accident because
+  // drawMapContent ran after the uncalled bg(). Removed dead closure; inlined fill.
+  if (A.share.customBg) {
+    const img = new Image();
+    img.onload = () => {
+      const r = Math.max(W/img.width, H/img.height);
+      const iw=img.width*r, ih=img.height*r;
+      ctx.drawImage(img, (W-iw)/2, (H-ih)/2, iw, ih);
+      ctx.fillStyle='rgba(0,0,0,0.65)';
+      ctx.fillRect(0,0,W,H);
+      drawMapContent(ctx,W,H,d);
+    };
+    img.src = A.share.customBg;
+  } else {
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+    drawMapContent(ctx,W,H,d);
+  }
+}
+
+function drawMapContent(ctx, W, H, d) {
+  // Lime accent line
+  ctx.fillStyle='#C5F135'; ctx.fillRect(0,0,W,4);
+
+  // App name
+  ctx.fillStyle='#C5F135';
+  ctx.font='bold 18px -apple-system,sans-serif';
+  ctx.textAlign='left'; // letterSpacing removed (BUG FIX #11)
+  ctx.fillText('TURFWAR', 32, 52);
+
+  // Draw territory polygon (centered in card)
+  if (d.coords && d.coords.length >= 3) {
+    const pad = 80;
+    const lngs = d.coords.map(c=>c[0]);
+    const lats  = d.coords.map(c=>c[1]);
+    const minLng=Math.min(...lngs), maxLng=Math.max(...lngs);
+    const minLat=Math.min(...lats), maxLat=Math.max(...lats);
+    const polyW = maxLng-minLng || 0.001;
+    const polyH = maxLat-minLat || 0.001;
+    const scale = Math.min((W-pad*2)/polyW, (H*0.6-pad*2)/polyH);
+    const cLng  = (maxLng+minLng)/2, cLat=(maxLat+minLat)/2;
+
+    // Shadow glow
+    ctx.shadowColor='rgba(197,241,53,0.3)';
+    ctx.shadowBlur=24;
+    ctx.beginPath();
+    d.coords.forEach((c,i)=>{
+      const x = W/2 + (c[0]-cLng)*scale;
+      const y = H*0.45 - (c[1]-cLat)*scale;
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.closePath();
+    ctx.fillStyle='rgba(197,241,53,0.18)';
+    ctx.fill();
+    ctx.strokeStyle='#C5F135';
+    ctx.lineWidth=2.5;
+    ctx.stroke();
+    ctx.shadowBlur=0;
+  }
+
+  // Stats below polygon
+  ctx.textAlign='center';
+  ctx.fillStyle='#FFFFFF';
+  ctx.font='bold 38px -apple-system,sans-serif';
+  ctx.fillText(fmt(d.area)+'m²', W/2, H*0.73);
+  ctx.fillStyle='#555';
+  ctx.font='600 12px -apple-system,sans-serif';
+  ctx.fillText('TERRITORY CLAIMED', W/2, H*0.73+24);
+
+  ctx.fillStyle='#333';
+  ctx.font='600 13px -apple-system,sans-serif';
+  ctx.fillText(A.user.name, W/2, H-36);
+  ctx.textAlign='left'; // letterSpacing removed (BUG FIX #11)
+}
+
+function onBgPicked(e) {
+  const file=e.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    A.share.customBg=ev.target.result;
+    generateCards();
+  };
+  reader.readAsDataURL(file);
+  // Reset so same file can be picked again
+  e.target.value='';
+}
+
+function saveCard() {
+  const canvas = _('share-canvas-'+A.share.currentCard);
+  const b64    = canvas.toDataURL('image/png');
+  if (window.Android?.saveImageToGallery) {
+    window.Android.saveImageToGallery(b64);
+    toast('Saved to gallery!');
+  } else {
+    // Web fallback — download link
+    const a=document.createElement('a');
+    a.href=b64; a.download='turfwar_'+Date.now()+'.png'; a.click();
+    toast('Saved!');
+  }
+}
+
+function shareCard() {
+  const canvas = _('share-canvas-'+A.share.currentCard);
+  const b64    = canvas.toDataURL('image/png');
+  if (window.Android?.shareImage) {
+    window.Android.shareImage(b64);
+  } else {
+    toast('Share not available on this device');
+  }
+}
+
+/* ================================================================
+   USER STATS
+================================================================ */
+async function loadUserDoc() {
+  const local=JSON.parse(localStorage.getItem('tw_stats')||'{}');
+  if(!db||!A.user.uid)return local;
+  try{
+    const doc=await db.collection('users').doc(A.user.uid).get();
+    return doc.exists?doc.data():local;
+  }catch(e){return local;}
+}
+
+async function getRank(myArea){
+  if(!db)return '?';
+  try{
+    const snap=await db.collection('users').where('totalArea','>',myArea).get();
+    return snap.size+1;
+  }catch(e){return '?';}
+}
+
+async function updateStats(area,dist,cal){
+  const local=JSON.parse(localStorage.getItem('tw_stats')||'{}');
+  local.totalArea=(local.totalArea||0)+area;
+  local.territoriesCount=(local.territoriesCount||0)+1;
+  local.totalDistance=(local.totalDistance||0)+dist;
+  local.totalCalories=(local.totalCalories||0)+cal;
+  localStorage.setItem('tw_stats',JSON.stringify(local));
+  if(!db||!A.user.uid)return;
+  try{
+    await db.collection('users').doc(A.user.uid).set({
+      name:A.user.name, color:A.user.color, uid:A.user.uid,
+      deviceId:A.user.uid,
+      totalArea:firebase.firestore.FieldValue.increment(area),
+      territoriesCount:firebase.firestore.FieldValue.increment(1),
+      totalDistance:firebase.firestore.FieldValue.increment(dist),
+      totalCalories:firebase.firestore.FieldValue.increment(cal),
+      lastSeen:sts()
+    },{merge:true});
+  }catch(e){console.warn('updateStats:',e);}
+}
+
+/* ================================================================
+   OFFLINE
+================================================================ */
+function saveOffline(data){
+  const q=JSON.parse(localStorage.getItem('tw_q')||'[]');
+  q.push({...data,_ts:Date.now()});
+  localStorage.setItem('tw_q',JSON.stringify(q));
+}
+
+async function syncQueue(){
+  if(!db)return;
+  const q=JSON.parse(localStorage.getItem('tw_q')||'[]');
+  if(!q.length)return;
+  let done=0;
+  for(const d of q){
+    try{
+      // BUG FIX #10: If the user signed out and back in under a different account,
+      // the queued item has a stale uid. Update it to the current user before syncing
+      // so territories are attributed to the correct account.
+      if (A.user.uid && d.uid !== A.user.uid) {
+        d.uid = A.user.uid;
+        d.owner = A.user.name;
+        d.color = A.user.color;
+        d.deviceId = A.user.uid;
+      }
+      const poly=turf.polygon([d.coordinates]);
+      await claimTerritory(d,poly);
+      await updateStats(d.area||0,d.distance||0,d.calories||0);
+      done++;
+    }catch(e){console.warn('sync item:',e);}
+  }
+  if(done>0){localStorage.removeItem('tw_q');toast('Synced '+done+' offline territories!');renderTerr();}
+}
+
+/* ================================================================
+   FIRESTORE HELPERS
+================================================================ */
+async function fsSet(col,id,data,merge=false){
+  if(!db){localStorage.setItem('tw_'+col+'_'+id,JSON.stringify(data));return;}
+  try{
+    const ref=db.collection(col).doc(id);
+    if(merge)await ref.set(data,{merge:true}); else await ref.set(data);
+  }catch(e){localStorage.setItem('tw_'+col+'_'+id,JSON.stringify(data));}
+}
+function sts(){try{return firebase.firestore.FieldValue.serverTimestamp();}catch(e){return new Date();}}
+
+/* ================================================================
+   UTILITIES
+================================================================ */
+function _(id){return document.getElementById(id);}
+function distM(a,b){return turf.distance(turf.point([a[1],a[0]]),turf.point([b[1],b[0]]),{units:'meters'});}
+function geoRing(path){const c=path.map(p=>[p[1],p[0]]);return[...c,c[0]];}
+function colorFor(id){
+  if(!id)return'#C5F135';
+  let h=0;
+  for(let i=0;i<id.length;i++)h=(id.charCodeAt(i)+((h<<5)-h))&0x7FFFFFFF;
+  let hue=h%360;
+  if(hue>=55&&hue<=95)hue=(hue+130)%360;
+  return`hsl(${hue},65%,50%)`;
+}
+function fmt(n){if(!n)return'0';return n>=10000?(n/1000).toFixed(1)+'k':Math.round(n).toString();}
+function pad(n){return String(Math.floor(n)).padStart(2,'0');}
+function tick(ms){return new Promise(r=>setTimeout(r,ms));}
+
+function setGPS(ok,acc){
+  const dot=_('gps-dot'),lbl=_('gps-lbl');
+  if(!dot)return;
+  dot.className=ok?'ok':'bad';
+  lbl.textContent=ok?(acc?'GPS ±'+Math.round(acc)+'m':'GPS OK'):'GPS Off';
+}
+
+let _tt;
+function toast(msg,dur=2500){
+  const t=_('toast');t.textContent=msg;t.classList.add('on');
+  clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('on'),dur);
+}
+
+function checkOnline(){
+  toast(navigator.onLine?'Online':'Offline mode');
+  if(navigator.onLine)syncQueue();
+}
+
+function hideSplash(){
+  const s=_('splash');if(!s)return;
+  s.classList.add('gone');
+  setTimeout(()=>{if(s.parentNode)s.remove();},550);
+}
+
+function callBridge(method,args=[]){
+  try{if(window.Android&&typeof window.Android[method]==='function')window.Android[method](...args);}
+  catch(e){console.warn('Bridge:',method,e);}
+}
+
+/* ================================================================
+   ONLINE / OFFLINE
+================================================================ */
+window.addEventListener('online',()=>{toast('Back online — syncing...');syncQueue();});
+window.addEventListener('offline',()=>toast('Offline — saving locally'));
+
+/* ================================================================
+   BOOT
+================================================================ */
+window.addEventListener('load',()=>{
+  const emergency=setTimeout(()=>{
+    // BUG FIX #14: Guard against race where signOut() already showed 'auth' but
+    // also reset authResolved=false, causing the emergency timeout to fire again
+    // and re-show auth over any screen the user has navigated to.
+    if(!authResolved){
+      authResolved=true;
+      hideSplash();
+      // Only redirect to auth if no screen is currently active
+      const anyActive = document.querySelector('.screen.active');
+      if (!anyActive) showScreen('auth');
+    }
+  },6000);
+
+  boot()
+    .then(()=>clearTimeout(emergency))
+    .catch(err=>{
+      console.error('Boot failed:',err);
+      clearTimeout(emergency);
+      hideSplash();
+      showScreen('auth');
+    });
+});
+</script>
 </body>
 </html>
