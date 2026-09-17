@@ -133,39 +133,180 @@ turfwar/
 
 ## 🚀 How to Build (Sketchware Pro)
 
-Since this uses Sketchware Pro (no Gradle), setup is manual:
+> This project was built entirely on a phone using **Sketchware Pro**. No PC, no Android Studio, no Gradle.
 
-1. **Create a new project** in Sketchware Pro
-   - Package: `com.rohit.turfwar`
-   - Min SDK: 21
+### Step 1 — Create New Project
 
-2. **WebView setup**
-   - Add a WebView component filling the full screen
-   - Enable JavaScript, DOM storage, geolocation in WebView settings
-   - Load `file:///android_asset/index.html`
+- Open Sketchware Pro → **New Project**
+- **App Name:** TurfWar
+- **Package:** `com.rohit.turfwar`
+- **Min SDK:** 21 (Android 5.0)
 
-3. **Add custom Java classes**
-   - Copy `TurfWarBridge.java`, `RunTrackingService.java`, `LocationCheckService.java`, `AlarmReceiver.java` into the custom classes section
+---
 
-4. **Add assets**
-   - Place `index.html` in the `assets/` folder
+### Step 2 — Setup the WebView
 
-5. **AndroidManifest additions**
-   - Add permissions from `AndroidManifest_additions.xml`:
-     - `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`
-     - `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION`, `FOREGROUND_SERVICE_HEALTH`
-     - `RECEIVE_BOOT_COMPLETED`, `VIBRATE`, `INTERNET`
-     - `POST_NOTIFICATIONS` (Android 13+)
-   - Register services and receiver
+In your `MainActivity` layout:
+- Add a **WebView** component that fills the full screen (width: `match_parent`, height: `match_parent`)
+- Give it the variable name `webview1`
 
-6. **Firebase**
-   - Create a Firebase project
-   - Enable Firestore + Authentication (Email/Password + Google)
-   - Copy your config into `index.html` where `FB_CFG` is defined
+In your `MainActivity` **onCreate** block, add this Java code:
 
-7. **FileProvider**
-   - Add `file_paths.xml` to `res/xml/`
-   - Register provider in manifest for image sharing
+```java
+webview1.getSettings().setJavaScriptEnabled(true);
+webview1.getSettings().setDomStorageEnabled(true);
+webview1.getSettings().setGeolocationEnabled(true);
+webview1.getSettings().setAllowFileAccessFromFileURLs(true);
+webview1.getSettings().setAllowUniversalAccessFromFileURLs(true);
+webview1.getSettings().setMediaPlaybackRequiresUserGesture(false);
+webview1.setWebChromeClient(new android.webkit.WebChromeClient() {
+    @Override
+    public void onGeolocationPermissionsShowPrompt(String origin, android.webkit.GeolocationPermissions.Callback callback) {
+        callback.invoke(origin, true, false);
+    }
+});
+webview1.addJavascriptInterface(new TurfWarBridge(this), "Android");
+webview1.loadUrl("file:///android_asset/index.html");
+```
+
+---
+
+### Step 3 — Add index.html as Asset
+
+- In Sketchware Pro → your project → **Files** tab
+- Go to **Assets** folder
+- Import `index.html` from storage
+- The file will be accessible at `file:///android_asset/index.html`
+
+---
+
+### Step 4 — Add Custom Java Classes
+
+In Sketchware Pro → your project → **Library** tab → **Custom classes**:
+
+Add each file one by one:
+- `TurfWarBridge.java`
+- `RunTrackingService.java`
+- `LocationCheckService.java`
+- `AlarmReceiver.java`
+
+Paste the full file contents into each custom class entry.
+
+---
+
+### Step 5 — AndroidManifest Permissions
+
+In Sketchware Pro → **AndroidManifest** section, add these permissions:
+
+```xml
+<uses-permission android:name="android.permission.INTERNET"/>
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+<uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH"/>
+<uses-permission android:name="android.permission.VIBRATE"/>
+<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+    android:maxSdkVersion="28"/>
+```
+
+And inside the `<application>` tag, register services and provider:
+
+```xml
+<service android:name=".RunTrackingService"
+    android:foregroundServiceType="location|health"
+    android:exported="false"/>
+
+<service android:name=".LocationCheckService"
+    android:foregroundServiceType="dataSync"
+    android:exported="false"/>
+
+<receiver android:name=".AlarmReceiver"
+    android:exported="true">
+    <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED"/>
+    </intent-filter>
+</receiver>
+
+<provider
+    android:name="androidx.core.content.FileProvider"
+    android:authorities="${applicationId}.fileprovider"
+    android:exported="false"
+    android:grantUriPermissions="true">
+    <meta-data
+        android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/file_paths"/>
+</provider>
+```
+
+Full manifest additions are in `android/AndroidManifest_additions.xml`.
+
+---
+
+### Step 6 — Firebase Setup
+
+1. Go to [console.firebase.google.com](https://console.firebase.google.com)
+2. Create a new project
+3. Add an Android app with package `com.rohit.turfwar`
+4. Enable **Firestore Database** (start in test mode)
+5. Enable **Authentication** → Email/Password + Google
+6. Copy your Firebase config and paste it into `index.html` where you see `FB_CFG`:
+
+```javascript
+const FB_CFG = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+```
+
+---
+
+### Step 7 — FileProvider XML
+
+In Sketchware Pro → **Files** → `res/xml/` → create `file_paths.xml`:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <cache-path name="images" path="images/"/>
+    <external-path name="external" path="."/>
+</paths>
+```
+
+---
+
+### Step 8 — Request Runtime Permissions
+
+In your `MainActivity` onCreate, request location and notification permissions:
+
+```java
+if (Build.VERSION.SDK_INT >= 23) {
+    requestPermissions(new String[]{
+        android.Manifest.permission.ACCESS_FINE_LOCATION,
+        android.Manifest.permission.ACCESS_COARSE_LOCATION
+    }, 1);
+}
+if (Build.VERSION.SDK_INT >= 33) {
+    requestPermissions(new String[]{
+        android.Manifest.permission.POST_NOTIFICATIONS
+    }, 2);
+}
+```
+
+---
+
+### Step 9 — Build & Install
+
+- In Sketchware Pro → **Build** → Export APK
+- Install on your device
+- Grant location permissions when prompted
 
 ---
 
