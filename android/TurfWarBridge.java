@@ -39,6 +39,9 @@ public class TurfWarBridge {
     static final String PREFS       = "TurfWarPrefs";
     static final String CHANNEL_ID  = "turfwar_alerts";
     static final String CHANNEL_NM  = "TurfWar Alerts";
+    static final String RUN_CHANNEL_ID = "turfwar_run";
+    static final String RUN_CHANNEL_NM = "TurfWar Active Run";
+    static final int RUN_NOTIF_ID = 9002;
     private static final String TAG = "TurfWarBridge";
 
     private final Context ctx;
@@ -49,8 +52,8 @@ public class TurfWarBridge {
     }
 
     /* ================================================================
-       DEVICE ID (now the Firebase UID, saved so background service
-       can query Firestore without needing WebView open)
+       DEVICE ID (Firebase UID, saved so background service can query
+       Firestore without needing WebView open)
     ================================================================ */
     @JavascriptInterface
     public void saveDeviceId(String deviceId) {
@@ -73,15 +76,20 @@ public class TurfWarBridge {
     @JavascriptInterface
     public void showStealNotification(String stolenByName, String areaStr) {
         String body = stolenByName + " just grabbed " + areaStr + "m² of your turf!";
-        showNotification("Territory Stolen!", body, 1);
+        showNotificationInternal("Territory Stolen!", body, 1);
     }
 
+    // BUG FIX #2 / #15: The original code had TWO @JavascriptInterface methods both named
+    // "showNotification" (one 2-arg, one 3-arg). Android's addJavascriptInterface does NOT
+    // support overloaded method names — the JS bridge resolves by name only, making the
+    // 2-arg public one ambiguous/broken. Renamed the internal 3-arg version to
+    // showNotificationInternal so there is exactly ONE @JavascriptInterface per name.
     @JavascriptInterface
     public void showNotification(String title, String body) {
-        showNotification(title, body, (int) (System.currentTimeMillis() % 10000));
+        showNotificationInternal(title, body, (int) (System.currentTimeMillis() % 10000));
     }
 
-    private void showNotification(String title, String body, int id) {
+    private void showNotificationInternal(String title, String body, int id) {
         Intent intent = new Intent(ctx, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
@@ -100,6 +108,53 @@ public class TurfWarBridge {
 
         NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm != null) nm.notify(id, nb.build());
+    }
+
+    /* ================================================================
+       LIVE RUN NOTIFICATION — persistent foreground service
+    ================================================================ */
+    @JavascriptInterface
+    public void startRunNotification(String mode) {
+        Intent intent = new Intent(ctx, RunTrackingService.class);
+        intent.setAction(RunTrackingService.ACTION_START);
+        intent.putExtra("mode", mode == null ? "Running" : mode);
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                androidx.core.content.ContextCompat.startForegroundService(ctx, intent);
+            } else {
+                ctx.startService(intent);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "startRunNotification failed", e);
+        }
+    }
+
+    @JavascriptInterface
+    public void updateRunNotification(String mode, String elapsedSeconds, String distanceMeters, String paused) {
+        Intent intent = new Intent(ctx, RunTrackingService.class);
+        intent.setAction(RunTrackingService.ACTION_UPDATE);
+        intent.putExtra("mode", mode == null ? "Running" : mode);
+        try {
+            intent.putExtra("elapsed", Long.parseLong(elapsedSeconds));
+        } catch (Exception e) {
+            intent.putExtra("elapsed", 0L);
+        }
+        try {
+            intent.putExtra("distance", Double.parseDouble(distanceMeters));
+        } catch (Exception e) {
+            intent.putExtra("distance", 0d);
+        }
+        intent.putExtra("paused", "true".equalsIgnoreCase(paused));
+        try { ctx.startService(intent); }
+        catch (Exception e) { Log.e(TAG, "updateRunNotification failed", e); }
+    }
+
+    @JavascriptInterface
+    public void dismissRunNotification() {
+        Intent intent = new Intent(ctx, RunTrackingService.class);
+        intent.setAction(RunTrackingService.ACTION_STOP);
+        try { ctx.startService(intent); }
+        catch (Exception e) { Log.e(TAG, "dismissRunNotification failed", e); }
     }
 
     /* ================================================================
@@ -131,7 +186,7 @@ public class TurfWarBridge {
             String filename = "TurfWar_" + System.currentTimeMillis() + ".png";
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                // ── Android 10+ — MediaStore, no permission needed ──
+                // Android 10+ — MediaStore, no WRITE permission needed
                 ContentValues cv = new ContentValues();
                 cv.put(MediaStore.Images.Media.DISPLAY_NAME, filename);
                 cv.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
@@ -150,7 +205,7 @@ public class TurfWarBridge {
                     resolver.update(uri, cv, null, null);
                 }
             } else {
-                // ── Android 8–9 — direct write + MediaScanner ──
+                // Android 8–9 — direct write + MediaScanner
                 // Requires WRITE_EXTERNAL_STORAGE granted at runtime
                 File dir = new File(Environment.getExternalStoragePublicDirectory(
                         Environment.DIRECTORY_PICTURES), "TurfWar");
@@ -205,6 +260,8 @@ public class TurfWarBridge {
 
     /* ================================================================
        BACKGROUND CHECKS — AlarmManager every 15 minutes
+       Note: setInexactRepeating on Android 12+ may batch up to ~75 min.
+       This is acceptable for steal-check frequency.
     ================================================================ */
     @JavascriptInterface
     public void startBackgroundChecks() {
@@ -259,8 +316,17 @@ public class TurfWarBridge {
             ch.setDescription("Alerts when your territory is stolen");
             ch.enableVibration(true);
             ch.setVibrationPattern(new long[]{0, 300, 150, 300});
+            NotificationChannel runCh = new NotificationChannel(
+                    RUN_CHANNEL_ID, RUN_CHANNEL_NM, NotificationManager.IMPORTANCE_LOW);
+            runCh.setDescription("Live timer, distance and pace while a run is active");
+            runCh.setSound(null, null);
+            runCh.enableVibration(false);
+
             NotificationManager nm = ctx.getSystemService(NotificationManager.class);
-            if (nm != null) nm.createNotificationChannel(ch);
+            if (nm != null) {
+                nm.createNotificationChannel(ch);
+                nm.createNotificationChannel(runCh);
+            }
         }
     }
 }

@@ -50,9 +50,7 @@ body{
   display:none;flex-direction:column;
   background:var(--bg);
   overflow:hidden;
-  /* FIX 2: Explicit height ensures flex children fill screen in Android WebView */
-  height:100%;
-  width:100%;
+  height:100%;width:100%;
 }
 .screen.active{display:flex}
 #screen-map.active{display:block}
@@ -250,7 +248,7 @@ body{
   flex-shrink:0;
 }
 .top-name{font-size:14px;font-weight:700;color:var(--white)}
-.top-sub{font-size:11px;color:var(--g2)}
+.top-sub{font-size:11px;color:var(--g1)}
 .icon-btn{
   width:36px;height:36px;border-radius:50%;
   background:var(--bg3);border:1px solid var(--line);
@@ -334,7 +332,7 @@ body{
 
 /* Home screen: stats+button shrink to content, map fills the rest */
 #screen-home{flex-direction:column}
-/* home-scroll base removed — FIX 2: was overriding flex:1 in screen-home causing navbar to float mid-screen */
+/* home-scroll base removed */
 #screen-home .mini-map-wrap{flex:1 1 0;min-height:0;height:auto;overflow:hidden;border-bottom:none;touch-action:none}
 #screen-home #mini-map{position:absolute;inset:0;touch-action:none}
 #screen-home .mini-map-wrap{position:relative}
@@ -357,7 +355,7 @@ body{
 }
 .lb-name{font-size:13px;font-weight:700;flex:1}
 .lb-area-val{font-size:14px;font-weight:900;color:var(--lime)}
-.lb-zones{font-size:11px;color:var(--g2)}
+.lb-zones{font-size:11px;color:var(--g1)}
 
 /* ============================================================
    MAP SCREEN
@@ -429,7 +427,7 @@ body{
 .track-num{font-size:22px;font-weight:900;color:#FFFFFF;line-height:1}
 .track-lbl{font-size:9px;font-weight:700;color:#666666;text-transform:uppercase;letter-spacing:1px;margin-top:3px}
 #track-status{
-  font-size:12px;color:#b8ccc5;text-align:center;
+  font-size:12px;color:#888888;text-align:center;
   margin-bottom:12px;min-height:14px;letter-spacing:0.2px;
 }
 /* Map header always dark-on-dark regardless of theme */
@@ -485,7 +483,7 @@ body{
   font-size:52px;font-weight:900;color:var(--lime);
   line-height:1;letter-spacing:-1px;
 }
-.stats-hero-unit{font-size:16px;color:var(--g2);font-weight:400}
+.stats-hero-unit{font-size:16px;color:var(--g1);font-weight:400}
 
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0}
 .grid-cell{
@@ -497,7 +495,7 @@ body{
 .grid-cell:nth-child(3),.grid-cell:nth-child(4){border-bottom:none}
 .grid-icon{color:var(--g2);margin-bottom:8px;display:flex;align-items:center}
 .grid-num{font-size:22px;font-weight:900;color:var(--white)}
-.grid-lbl{font-size:10px;font-weight:700;color:var(--g2);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.grid-lbl{font-size:10px;font-weight:700;color:var(--g1);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
 
 .hist-item{
   display:flex;align-items:center;gap:12px;
@@ -506,7 +504,7 @@ body{
 .hist-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .hist-info{flex:1;min-width:0}
 .hist-main{font-size:14px;font-weight:800;color:var(--white)}
-.hist-sub{font-size:11px;color:var(--g2);margin-top:2px}
+.hist-sub{font-size:11px;color:var(--g1);margin-top:2px}
 .hist-val{font-size:13px;font-weight:700;color:var(--g1);flex-shrink:0}
 
 /* ============================================================
@@ -517,23 +515,23 @@ body{
   border-bottom:1px solid var(--line);flex-shrink:0;
 }
 .lb-hero-title{font-size:24px;font-weight:900;letter-spacing:-0.3px}
-.lb-hero-sub{font-size:13px;color:var(--g2);margin-top:3px}
+.lb-hero-sub{font-size:13px;color:var(--g1);margin-top:3px}
 
 .lb-full-item{
   display:flex;align-items:center;gap:12px;
   padding:14px 18px;border-bottom:1px solid var(--line);
 }
 .lb-full-item.me{background:rgba(197,241,53,0.05)}
-.lb-rank{font-size:14px;font-weight:900;color:#8fa49e;width:26px;text-align:center;flex-shrink:0}
-.lb-rank.top{color:#ffffff;font-size:11px}
+.lb-rank{font-size:14px;font-weight:900;color:var(--g1);width:26px;text-align:center;flex-shrink:0}
+.lb-rank.top{color:var(--white)}
 .lb-full-av{
   width:38px;height:38px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
   font-weight:900;font-size:14px;color:var(--bg);flex-shrink:0;
 }
 .lb-full-info{flex:1;min-width:0}
-.lb-full-nm{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#f0f5f2}
-.lb-full-zones{font-size:11px;color:var(--g2)}
+.lb-full-nm{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--white)}
+.lb-full-zones{font-size:11px;color:var(--g1)}
 .lb-full-area{font-size:16px;font-weight:900;color:var(--lime);flex-shrink:0}
 
 /* ============================================================
@@ -541,7 +539,7 @@ body{
 ============================================================ */
 #share-modal{
   position:fixed;inset:0;z-index:8000;
-  background:rgba(0,0,0,0.85);
+  background:rgba(2,10,8,0.78);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
   display:none;flex-direction:column;
   align-items:center;justify-content:flex-end;
 }
@@ -651,7 +649,7 @@ body{
   padding-bottom:36px;
 }
 .picker-handle{width:32px;height:3px;background:var(--g3);border-radius:2px;margin:16px auto 12px}
-.picker-ttl{font-size:13px;font-weight:700;color:var(--g2);text-transform:uppercase;
+.picker-ttl{font-size:13px;font-weight:700;color:var(--g1);text-transform:uppercase;
   letter-spacing:2px;padding:0 20px 16px;text-align:center;border-bottom:1px solid var(--line)}
 .picker-opt{
   display:flex;align-items:center;gap:16px;
@@ -665,7 +663,7 @@ body{
   flex-shrink:0;
 }
 .picker-opt-ttl{font-size:15px;font-weight:800}
-.picker-opt-sub{font-size:12px;color:var(--g2);margin-top:3px}
+.picker-opt-sub{font-size:12px;color:var(--g1);margin-top:3px}
 
 /* ============================================================
    PAUSE BUTTON + RUN CONTROLS
@@ -687,8 +685,22 @@ body{
 body.light{
   --bg:#F5F5F5;--bg2:#FFFFFF;--bg3:#EBEBEB;
   --line:#E0E0E0;--line2:#D0D0D0;
-  --white:#111111;--g1:#444444;--g2:#777777;--g3:#C8C8C8;
+  --white:#111111;--g1:#2d3d38;--g2:#445550;--g3:#C8C8C8;
+  --lime:#4a7c00;--lime-d:#3a6000;
 }
+/* Light mode: all text uses dark values for white bg */
+body.light .lb-hero-title{color:#111111}
+body.light .lb-hero-sub{color:#555555}
+body.light .lb-full-nm{color:#111111!important}
+body.light .lb-rank{color:#555555}
+body.light .lb-rank.top{color:#111111}
+body.light .home-stat-card{background:rgba(255,255,255,.90);border:1px solid #e0e0e0}
+body.light .home-stat-value{color:#111111!important;text-shadow:none}
+body.light .home-stat-label{font-size:10px;color:var(--g1);letter-spacing:.2px}
+body.light .home-stat-icon{color:#4a7c00}
+body.light .home-primary-value{color:#2a5c00!important}
+body.light .home-brand{color:#111111}
+body.light .home-tagline{color:#555555}
 body.light .leaflet-tile-pane{filter:none}
 body.light #map{background:#E8E8E8}
 body.light .map-hdr{background:rgba(245,245,245,0.94)}
@@ -764,10 +776,7 @@ body.light #settings-modal .btn-ghost{color:#4f5b56;border-color:#d5ddda;backgro
 ============================================================ */
 #normal-summary{
   position:fixed;inset:0;z-index:8000;
-  /* FIX 6: Changed from solid black to semi-transparent so map shows through */
-  background:rgba(2,10,8,0.78);
-  backdrop-filter:blur(6px);
-  -webkit-backdrop-filter:blur(6px);
+  background:rgba(2,10,8,0.78);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
   display:none;align-items:flex-end;
 }
 #normal-summary.on{display:flex}
@@ -778,7 +787,7 @@ body.light #settings-modal .btn-ghost{color:#4f5b56;border-color:#d5ddda;backgro
   padding:20px 18px 36px;
 }
 .summary-handle{width:32px;height:3px;background:var(--g3);border-radius:2px;margin:0 auto 20px}
-.summary-ttl{font-size:18px;font-weight:900;letter-spacing:-0.3px;margin-bottom:20px;color:#ffffff}
+.summary-ttl{font-size:18px;font-weight:900;letter-spacing:-0.3px;margin-bottom:20px}
 .summary-grid{
   display:grid;grid-template-columns:1fr 1fr;
   border:1px solid var(--line);border-radius:var(--r);
@@ -791,7 +800,7 @@ body.light #settings-modal .btn-ghost{color:#4f5b56;border-color:#d5ddda;backgro
 .summary-cell:nth-child(2n){border-right:none}
 .summary-cell:nth-child(3),.summary-cell:nth-child(4){border-bottom:none}
 .summary-num{font-size:24px;font-weight:900;color:var(--lime)}
-.summary-lbl{font-size:10px;font-weight:700;color:#8fa89f;
+.summary-lbl{font-size:10px;font-weight:700;color:var(--g1);
   text-transform:uppercase;letter-spacing:1px;margin-top:3px}
 
 /* ============================================================
@@ -824,7 +833,7 @@ body.light #settings-modal .btn-ghost{color:#4f5b56;border-color:#d5ddda;backgro
 .settings-row-icon{color:var(--g2);flex-shrink:0}
 .settings-row-body{flex:1;min-width:0}
 .settings-row-label{font-size:14px;font-weight:600}
-.settings-row-sub{font-size:11px;color:var(--g2);margin-top:2px}
+.settings-row-sub{font-size:11px;color:var(--g1);margin-top:2px}
 .settings-row-val{font-size:13px;color:var(--g1);flex-shrink:0}
 .settings-row.danger .settings-row-label{color:var(--red)}
 
@@ -876,9 +885,10 @@ body.light #settings-modal .btn-ghost{color:#4f5b56;border-color:#d5ddda;backgro
   --bg:#06110f;--bg2:#0a1714;--bg3:rgba(18,35,31,.72);
   --line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.15);
   --lime:#b8f24a;--lime-d:#8fcf24;--white:#f5f8f6;
-  --g1:#a6b1ad;--g2:#71807a;--g3:#34423e;
+  --g1:#c8d4cf;--g2:#9aada6;--g3:#34423e;
   --red:#ff665e;--r:16px;--r-lg:22px;--nav:70px;
 }
+/* --g1 upgraded #a6b1ad→#c8d4cf (contrast 9:1), --g2 upgraded #71807a→#9aada6 (contrast 6:1) */
 html,body{background:#06110f}
 body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;letter-spacing:-.01em}
 .screen{background:#06110f}
@@ -911,58 +921,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
 .home-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:20px}
 .home-stat-card{min-height:91px;border-radius:17px;background:rgba(9,27,23,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:13px 14px 12px;position:relative;overflow:hidden}
 .home-stat-card:after{content:"";position:absolute;right:-25px;top:-25px;width:80px;height:80px;border-radius:50%;background:rgba(180,241,70,.035)}
-.home-stat-icon{color:var(--lime);margin-bottom:6px;height:21px}.home-stat-label{font-size:10px;color:#8fa89f;letter-spacing:.2px;margin-top:4px}.home-stat-value{font-size:22px;font-weight:900;line-height:1.1;color:#ffffff!important;text-shadow:0 1px 4px rgba(0,0,0,.5)}
+.home-stat-icon{color:var(--lime);margin-bottom:7px;height:21px}.home-stat-label{font-size:10px;color:var(--g1);letter-spacing:.2px}.home-stat-value{font-size:21px;font-weight:900;line-height:1.05;margin-top:2px;color:#ffffff!important;text-shadow:0 1px 4px rgba(0,0,0,.5)}
 .home-section-head{display:flex;align-items:center;justify-content:space-between;margin:0 2px 9px}.home-section-head span{font-size:14px;font-weight:700;color:#edf2ef}.home-section-head button{border:0;background:none;color:#aab4b0;font-size:11px;padding:4px;cursor:pointer}
 .home-history-card{min-height:69px;border-radius:17px;background:rgba(8,25,21,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:flex;align-items:center;gap:12px;padding:12px 13px;color:#95a29d}.home-history-icon{width:43px;height:43px;border-radius:14px;background:rgba(255,255,255,.055);display:flex;align-items:center;justify-content:center;color:#d7dfdc;flex-shrink:0}.home-history-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}.home-history-copy strong{font-size:12px;color:#f0f4f2}.home-history-copy span{font-size:10px;color:#899690}
-.home-fab{position:fixed;z-index:20;right:22px;bottom:80px;width:57px;height:57px;border:0;border-radius:50%;background:linear-gradient(135deg,#d5ff70,#8fdc36);color:#14220f;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 28px rgba(111,190,47,.35),0 0 0 7px rgba(170,238,85,.06);cursor:pointer}.home-fab:active{transform:scale(.96)}
-#screen-home .bottom-nav,#screen-stats .bottom-nav,#screen-leaderboard .bottom-nav{
-  position:fixed;bottom:0;left:0;right:0;
-  z-index:10;background:rgba(5,19,16,.95);
-  border-top:1px solid rgba(255,255,255,.09);
-  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
-  height:70px;padding-bottom:2px;
-  /* FIX: fixed bottom nav always sticks to screen bottom in WebView */
-}
-#screen-home .home-scroll{padding-bottom:82px}
-#screen-stats .scroll{padding-bottom:82px}
-#screen-leaderboard .scroll{padding-bottom:82px}
+.home-fab{position:absolute;z-index:5;right:22px;bottom:83px;width:57px;height:57px;border:0;border-radius:50%;background:linear-gradient(135deg,#d5ff70,#8fdc36);color:#14220f;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 28px rgba(111,190,47,.35),0 0 0 7px rgba(170,238,85,.06);cursor:pointer}.home-fab:active{transform:scale(.96)}
+#screen-home .bottom-nav,#screen-stats .bottom-nav,#screen-leaderboard .bottom-nav{position:relative;z-index:10;background:rgba(5,19,16,.88);border-top:1px solid rgba(255,255,255,.09);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);height:70px;padding-bottom:2px}
 #screen-home .nav-item,#screen-stats .nav-item,#screen-leaderboard .nav-item{color:#75817d;gap:5px}.nav-label{font-size:9px;text-transform:none;letter-spacing:0;font-weight:600}.nav-item.active{color:var(--lime)!important}.nav-item.active svg{filter:drop-shadow(0 0 6px rgba(184,242,74,.22))}
 
 /* MAP */
 #screen-map{background:#091714}
 #screen-map #map{filter:saturate(.82) brightness(.72) contrast(1.02)}
 #screen-map .map-hdr{height:auto;top:16px;left:14px;right:14px;background:transparent;border:0;padding:0;display:block;z-index:1100}
-/* map-search removed — leftover UI */
-
-/* Save image popup */
-#save-popup{
-  position:absolute;top:16px;left:50%;transform:translateX(-50%);
-  z-index:9100;pointer-events:none;
-  opacity:0;transition:opacity .3s ease;
-  white-space:nowrap;
-}
-#save-popup.on{opacity:1}
-.save-popup-inner{
-  display:flex;align-items:center;gap:12px;
-  background:linear-gradient(135deg,#0f2a22,#0a1e18);
-  border:1px solid rgba(184,242,74,.35);
-  border-radius:16px;padding:14px 20px;
-  box-shadow:0 8px 28px rgba(0,0,0,.45),0 0 0 1px rgba(184,242,74,.08);
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-}
-.save-popup-title{font-size:14px;font-weight:800;color:#ffffff;letter-spacing:-.2px}
-.save-popup-sub{font-size:11px;color:#8fa89f;margin-top:2px}
-.map-back-btn{position:absolute;left:0;top:60px;width:43px;height:43px;border-radius:50%;background:rgba(7,22,18,.88);border:1px solid rgba(255,255,255,.12);color:#eaf0ed;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 25px rgba(0,0,0,.3);cursor:pointer}
+.map-search{height:48px;border-radius:26px;background:rgba(7,22,18,.82);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);display:flex;align-items:center;padding:0 13px;gap:11px;box-shadow:0 10px 25px rgba(0,0,0,.24);color:#9ca8a4;font-size:12px;cursor:pointer}.map-search-icon{color:var(--lime);display:flex}.map-search-settings{margin-left:auto;color:#a7b0ad;display:flex}
+.map-back-btn{position:absolute;left:8px;top:60px;width:42px;height:42px;border-radius:50%;background:rgba(6,17,15,.88);border:1px solid rgba(255,255,255,.14);color:#eaf0ed;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.3);cursor:pointer;z-index:10}
 .map-locate{position:absolute;right:2px;top:60px;width:43px;height:43px;border-radius:50%;background:rgba(7,22,18,.88);border:1px solid rgba(255,255,255,.12);color:#eaf0ed;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 25px rgba(0,0,0,.3);cursor:pointer}.map-mode-title{display:none}
 #screen-map .map-sheet{left:10px;right:10px;bottom:9px;border-radius:25px;background:rgba(6,20,17,.88);border:1px solid rgba(255,255,255,.14);padding:12px 15px 16px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 16px 45px rgba(0,0,0,.36)}
-#screen-map .sheet-handle{width:37px;height:4px;background:rgba(255,255,255,.28);margin:0 auto 16px}.track-row{margin-bottom:16px}.track-num{font-size:24px;color:#ffffff!important;letter-spacing:-.5px}.track-lbl{font-size:9px;color:#a5b5ae;letter-spacing:.5px}.track-btn{border-radius:26px!important;padding:14px!important;background:linear-gradient(135deg,#cfff66,#91df39)!important;color:#13220e!important;box-shadow:0 8px 22px rgba(120,210,51,.20)}.track-btn.stop{background:var(--red)!important;color:#fff!important}.pause-btn{border-radius:50%;width:49px;height:49px;background:rgba(255,255,255,.07)}
+#screen-map .sheet-handle{width:37px;height:4px;background:rgba(255,255,255,.28);margin:0 auto 16px}.track-row{margin-bottom:14px}.track-num{font-size:20px}.track-lbl{font-size:9px;color:var(--g1)}.track-btn{border-radius:26px!important;padding:14px!important;background:linear-gradient(135deg,#cfff66,#91df39)!important;color:#13220e!important;box-shadow:0 8px 22px rgba(120,210,51,.20)}.track-btn.stop{background:var(--red)!important;color:#fff!important}.pause-btn{border-radius:50%;width:49px;height:49px;background:rgba(255,255,255,.07)}
 #screen-map .gps-pill{display:none}
 
 /* STATS */
 #screen-stats{background:linear-gradient(180deg,#0b1c17,#06110f 70%);}
 #screen-stats .stats-hero{margin:15px 16px 12px;padding:18px;border-radius:20px;background:linear-gradient(145deg,rgba(30,58,45,.88),rgba(9,28,22,.72));backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.1);position:relative;overflow:hidden}
 #screen-stats .stats-hero:after{content:"";position:absolute;right:-45px;top:-55px;width:170px;height:170px;border-radius:50%;background:rgba(176,239,75,.08);filter:blur(5px)}
-.stats-hero-lbl{font-size:11px;color:#a7b3ae;text-transform:none;letter-spacing:.3px;margin-bottom:6px}.stats-hero-num{font-size:48px;color:#f4f7f5}.stats-hero-unit{font-size:14px;color:#88958f}
+.stats-hero-lbl{font-size:11px;color:#a7b3ae;text-transform:none;letter-spacing:.3px;margin-bottom:6px}.stats-hero-num{font-size:48px;color:#f4f7f5}.stats-hero-unit{font-size:14px;color:var(--g1)}
 #screen-stats .scroll{padding:0 16px 10px}.grid2{gap:10px}.grid-cell{padding:16px;border-radius:17px;background:rgba(10,29,24,.70);border:1px solid rgba(255,255,255,.09)!important}.grid-cell:nth-child(3),.grid-cell:nth-child(4){border-bottom:1px solid rgba(255,255,255,.09)}.grid-icon{color:var(--lime);margin-bottom:9px}.grid-num{font-size:23px}.grid-lbl{font-size:9px;text-transform:none;letter-spacing:.2px;color:#84908b}
 #screen-stats .sec-label{padding:21px 2px 10px;font-size:14px;text-transform:none;letter-spacing:0;color:#eef2f0}.hist-item{margin-bottom:8px;border:1px solid rgba(255,255,255,.08);border-radius:15px;background:rgba(10,29,24,.62);padding:13px 14px}.hist-item:last-child{border-bottom:1px solid rgba(255,255,255,.08)}
 
@@ -970,7 +951,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
 #screen-leaderboard{background:radial-gradient(ellipse at 75% 15%,rgba(50,95,62,.32),transparent 35%),linear-gradient(180deg,#0b2119,#06110f 100%);position:relative}
 #screen-leaderboard:after{content:"";position:absolute;left:0;right:0;bottom:70px;height:40%;background:linear-gradient(180deg,transparent,rgba(5,17,14,.15)),linear-gradient(155deg,transparent 28%,rgba(24,57,40,.45) 29%,rgba(9,27,21,.95) 52%,rgba(5,16,13,1) 53%);clip-path:polygon(0 55%,18% 38%,29% 49%,43% 20%,58% 48%,73% 30%,88% 50%,100% 28%,100% 100%,0 100%);pointer-events:none}
 #screen-leaderboard .lb-hero{height:104px;padding:25px 17px 12px;background:transparent;border:0;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:2}.lb-hero-title{font-size:25px}.lb-hero-sub{font-size:11px;color:#7f8c87;margin-top:5px}
-#screen-leaderboard .scroll{position:relative;z-index:3;padding:0 12px 90px}.lb-full-item{margin:7px 4px;border-radius:17px;padding:12px 12px;background:rgba(12,32,26,.70);backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px)}.lb-full-item.me{background:linear-gradient(135deg,rgba(37,71,48,.86),rgba(13,38,27,.75));border-color:rgba(188,239,87,.38)!important;box-shadow:0 10px 26px rgba(0,0,0,.16),inset 0 0 0 1px rgba(190,242,93,.04)}.lb-rank{font-size:13px;color:#9aa5a1;width:22px}.lb-full-av{width:42px;height:42px;border:1px solid rgba(255,255,255,.12)}.lb-full-nm{font-size:13px;color:#f0f5f2}.lb-full-zones{font-size:10px;color:#81908a}.lb-full-area{font-size:15px;color:var(--lime)}
+#screen-leaderboard .scroll{position:relative;z-index:3;padding:0 12px 90px}.lb-full-item{margin:7px 4px;border-radius:17px;padding:12px 12px;background:rgba(12,32,26,.70);backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px)}.lb-full-item.me{background:linear-gradient(135deg,rgba(37,71,48,.86),rgba(13,38,27,.75));border-color:rgba(188,239,87,.38)!important;box-shadow:0 10px 26px rgba(0,0,0,.16),inset 0 0 0 1px rgba(190,242,93,.04)}.lb-rank{font-size:13px;color:#9aa5a1;width:22px}.lb-full-av{width:42px;height:42px;border:1px solid rgba(255,255,255,.12)}.lb-full-nm{font-size:13px;color:var(--white)}.lb-full-zones{font-size:10px;color:var(--g1)}.lb-full-area{font-size:15px;color:var(--lime)}
 
 /* SETTINGS — turn existing modal into reference full-screen settings */
 #settings-modal{align-items:stretch;background:#06110f;z-index:8000}.settings-sheet{width:100%;height:100%;max-height:none;border-radius:0;background:linear-gradient(180deg,#0b1c17,#06110f);border:0!important;overflow-y:auto;padding:0 14px 30px}.settings-handle{display:none}.settings-ttl{font-size:24px;padding:23px 4px 18px;border-bottom:0}.settings-sec{font-size:10px;color:#7f8d87;padding:14px 4px 7px;letter-spacing:1.8px}.settings-row{margin:0 0 1px;border:1px solid rgba(255,255,255,.075);background:rgba(13,32,27,.62);padding:14px 13px;border-bottom:1px solid rgba(255,255,255,.075);min-height:58px}.settings-row:first-of-type{border-radius:17px 17px 0 0}.settings-row:last-of-type{border-radius:0 0 17px 17px}.settings-row-icon{color:#a5b0ac}.settings-row-label{font-size:13px}.settings-row-sub{font-size:10px;color:#7e8b86}.settings-name-inp{background:rgba(255,255,255,.055);border-color:rgba(255,255,255,.11);border-radius:10px}.settings-save-btn{border-radius:10px}.color-row{padding:11px 13px 13px;background:rgba(13,32,27,.62);border:1px solid rgba(255,255,255,.075);border-top:0;border-radius:0 0 17px 17px}.sw{width:42px;height:24px}.sw-track{background:#34423d}.sw input:checked+.sw-track{background:#7dcc3d}.sw-thumb{width:18px;height:18px;top:3px}.sw input:checked~.sw-thumb{transform:translateX(18px)}
@@ -988,6 +969,148 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
   #screen-map{width:430px}.home-fab{right:24px}
 }
 
+
+
+/* ============================================================
+   LIGHT THEME VISIBILITY FIX
+   Only overrides colors/backgrounds that were hard-coded by the
+   premium redesign layer. Layout, spacing and behavior unchanged.
+============================================================ */
+body.light #screen-home{
+  background:radial-gradient(ellipse at 50% 8%,rgba(126,180,100,.18) 0%,rgba(245,245,245,0) 43%),
+             linear-gradient(180deg,#eef5f1 0%,#f5f7f6 48%,#f5f5f5 100%);
+}
+body.light #screen-home .home-bg-art:before{background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(245,247,246,.55) 62%,#f5f5f5 100%)}
+body.light #screen-home .home-bg-art:after{background:rgba(126,180,58,.07)}
+body.light #screen-home .mountain-back{background:linear-gradient(180deg,rgba(92,125,108,.16),rgba(210,220,216,.35))}
+body.light #screen-home .mountain-front{background:linear-gradient(180deg,rgba(158,180,169,.18),rgba(225,232,229,.60))}
+body.light .home-brand{color:#111!important;text-shadow:none}
+body.light .home-tagline{color:#53615c!important}
+body.light .home-tagline span{color:#4a7c00!important}
+body.light .home-primary-card{background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(242,247,244,.96));border-color:#dce4e0!important;box-shadow:0 10px 28px rgba(30,55,45,.08),inset 0 1px 0 rgba(255,255,255,.9)}
+body.light .home-card-label{color:#53615c!important}
+body.light .home-primary-value{color:#2f5f00!important}
+body.light .home-primary-value small{color:#65726d!important}
+body.light .home-chevron{color:#66736e!important}
+body.light .home-stat-card{background:rgba(255,255,255,.96);border-color:#dce4e0!important;box-shadow:0 8px 22px rgba(30,55,45,.06),inset 0 1px 0 rgba(255,255,255,.9)}
+body.light .home-stat-label{color:#53615c!important}
+body.light .home-stat-value{color:#111!important;text-shadow:none}
+body.light .home-section-head span{color:#18201d!important}
+body.light .home-section-head button{color:#53615c!important}
+body.light .home-history-card{background:rgba(255,255,255,.94);border-color:#dce4e0!important;color:#53615c}
+body.light .home-history-icon{background:#edf2ef;color:#53615c}
+body.light .home-history-copy strong{color:#18201d}
+body.light .home-history-copy span{color:#68756f}
+body.light #screen-home .bottom-nav,
+body.light #screen-stats .bottom-nav,
+body.light #screen-leaderboard .bottom-nav{background:rgba(255,255,255,.94);border-top-color:#dce4e0}
+body.light #screen-home .nav-item,
+body.light #screen-stats .nav-item,
+body.light #screen-leaderboard .nav-item{color:#6b7772}
+body.light .nav-item.active{color:#4a7c00!important}
+body.light .nav-item.active svg{filter:none}
+
+body.light #screen-stats{background:linear-gradient(180deg,#f1f6f3,#f5f5f5 70%)}
+body.light #screen-stats .stats-hero{background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(239,246,242,.98));border-color:#dce4e0!important;box-shadow:0 10px 28px rgba(30,55,45,.07),inset 0 1px 0 rgba(255,255,255,.9)}
+body.light #screen-stats .stats-hero-lbl{color:#53615c}
+body.light #screen-stats .stats-hero-num{color:#111!important}
+body.light #screen-stats .stats-hero-unit{color:#65726d}
+body.light #screen-stats .grid-cell{background:rgba(255,255,255,.96);border-color:#dce4e0!important;box-shadow:0 7px 20px rgba(30,55,45,.05)}
+body.light #screen-stats .grid-num{color:#111!important}
+body.light #screen-stats .grid-lbl{color:#53615c}
+body.light #screen-stats .sec-label{color:#18201d!important}
+body.light #screen-stats .hist-item{background:rgba(255,255,255,.94);border-color:#dce4e0!important}
+body.light #screen-stats .hist-main{color:#111!important}
+body.light #screen-stats .hist-sub{color:#68756f}
+body.light #screen-stats .hist-val{color:#53615c}
+
+body.light #screen-leaderboard{background:radial-gradient(ellipse at 75% 15%,rgba(126,180,100,.16),transparent 35%),linear-gradient(180deg,#f0f6f3,#f5f5f5 100%)}
+body.light #screen-leaderboard:after{background:linear-gradient(180deg,transparent,rgba(220,230,225,.25)),linear-gradient(155deg,transparent 28%,rgba(190,208,199,.30) 29%,rgba(220,230,225,.55) 52%,rgba(239,244,242,.85) 53%)}
+body.light #screen-leaderboard .lb-hero-sub{color:#53615c}
+body.light #screen-leaderboard .lb-full-item{background:rgba(255,255,255,.95);border-color:#dce4e0!important;box-shadow:0 8px 22px rgba(30,55,45,.05)}
+body.light #screen-leaderboard .lb-full-item.me{background:linear-gradient(135deg,rgba(235,247,221,.98),rgba(246,250,242,.98));border-color:rgba(74,124,0,.35)!important;box-shadow:0 8px 22px rgba(30,55,45,.06)}
+body.light #screen-leaderboard .lb-rank{color:#53615c}
+body.light #screen-leaderboard .lb-rank.top{color:#111}
+body.light #screen-leaderboard .lb-full-nm{color:#111!important}
+body.light #screen-leaderboard .lb-full-zones{color:#68756f}
+body.light #screen-leaderboard .lb-full-area{color:#4a7c00}
+
+body.light #screen-map{background:#eef2f0}
+body.light #screen-map .map-search{background:rgba(255,255,255,.94);border-color:#d5dfdb;color:#53615c;box-shadow:0 8px 22px rgba(30,55,45,.10)}
+body.light #screen-map .map-back-btn,
+body.light #screen-map .map-locate{background:rgba(255,255,255,.96);border-color:#d5dfdb;color:#26322d;box-shadow:0 8px 22px rgba(30,55,45,.10)}
+body.light #screen-map .map-sheet{background:rgba(255,255,255,.94);border-color:#d5dfdb;box-shadow:0 12px 30px rgba(30,55,45,.12)}
+body.light #screen-map .sheet-handle{background:#b5c0bb}
+body.light #screen-map .track-num{color:#111}
+body.light #screen-map .track-lbl{color:#53615c}
+body.light #screen-map #track-status{color:#53615c}
+
+/* Light theme: run-type picker visibility only */
+body.light #run-picker{background:rgba(0,0,0,.24)}
+body.light #run-picker .picker-sheet{
+  background:linear-gradient(180deg,#ffffff,#f4f7f5);
+  border-color:#dce4e0!important;
+  color:#111111;
+  box-shadow:0 -12px 36px rgba(30,55,45,.12);
+}
+body.light #run-picker .picker-handle{background:#aeb9b4}
+body.light #run-picker .picker-ttl{color:#53615c}
+body.light #run-picker .picker-opt{border-bottom-color:#dfe5e2}
+body.light #run-picker .picker-opt:active{background:#edf2ef}
+body.light #run-picker .picker-opt-icon{background:#edf2ef}
+body.light #run-picker .picker-opt-ttl{color:#18201d!important}
+body.light #run-picker .picker-opt-sub{color:#68756f!important}
+body.light #run-picker .btn-ghost{
+  color:#4f5b56!important;
+  background:#fff;
+  border-color:#d5ddda;
+}
+
+/* Light theme: normal-run completion sheet visibility only */
+body.light #normal-summary{background:rgba(0,0,0,.24)}
+body.light #normal-summary .summary-sheet{
+  background:linear-gradient(180deg,#ffffff,#f4f7f5);
+  border-color:#dce4e0!important;
+  color:#111111;
+  box-shadow:0 -12px 36px rgba(30,55,45,.12);
+}
+body.light #normal-summary .summary-handle{background:#aeb9b4}
+body.light #normal-summary .summary-ttl{color:#18201d!important}
+body.light #normal-summary .summary-grid{border-color:#cfd9d5}
+body.light #normal-summary .summary-cell{border-color:#cfd9d5}
+body.light #normal-summary .summary-num{color:#4a7c00!important}
+body.light #normal-summary .summary-lbl{color:#68756f!important}
+body.light #normal-summary .share-action-btn{
+  background:#ffffff;
+  border-color:#dce4e0;
+  color:#18201d!important;
+}
+body.light #normal-summary .share-action-btn svg{color:#53615c!important}
+
+/* Save confirmation popup */
+#save-popup{
+  position:fixed;inset:0;z-index:9500;display:none;align-items:center;justify-content:center;
+  padding:24px;background:rgba(0,0,0,.38);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+}
+#save-popup.on{display:flex}
+.save-popup-card{
+  min-width:210px;max-width:300px;padding:20px 22px;border-radius:20px;text-align:center;
+  background:linear-gradient(145deg,#10231d,#07140f);border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 18px 45px rgba(0,0,0,.32);animation:savePopIn .2s ease-out;
+}
+.save-popup-icon{
+  width:46px;height:46px;margin:0 auto 10px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:rgba(184,242,74,.14);color:var(--lime);border:1px solid rgba(184,242,74,.25);
+}
+.save-popup-title{font-size:16px;font-weight:900;color:#f5f8f6}
+.save-popup-sub{font-size:11px;color:#aab7b1;margin-top:4px}
+@keyframes savePopIn{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+body.light #save-popup{background:rgba(0,0,0,.24)}
+body.light .save-popup-card{background:linear-gradient(145deg,#fff,#f1f6f3);border-color:#dce4e0;box-shadow:0 18px 45px rgba(30,55,45,.18)}
+body.light .save-popup-title{color:#111}
+body.light .save-popup-sub{color:#53615c}
+body.light .save-popup-icon{background:rgba(74,124,0,.10);border-color:rgba(74,124,0,.22);color:#4a7c00}
+
 </style>
 </head>
 <body>
@@ -996,14 +1119,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
      SPLASH
 ============================================================ -->
 <div id="splash">
+  <div id="splash-status" style="position:absolute;bottom:70px;left:0;right:0;text-align:center;font-size:12px;color:rgba(255,255,255,.28);letter-spacing:.5px">Loading...</div>
   <div class="splash-mark">
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
   </div>
   <div style="font-size:22px;font-weight:900;letter-spacing:3px">TURFWAR</div>
-  <div style="font-size:11px;color:var(--g2);letter-spacing:3px;text-transform:uppercase">Claim Your Territory</div>
+  <div style="font-size:11px;color:rgba(255,255,255,.55);letter-spacing:3px;text-transform:uppercase">Claim Your Territory</div>
 </div>
 
 <!-- Toast -->
+
+<div id="signout-modal" style="display:none;position:fixed;inset:0;z-index:99000;align-items:center;justify-content:center;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)">
+  <div style="width:min(320px,88vw);background:var(--bg2);border-radius:20px;padding:28px 24px 20px;border:1px solid rgba(255,255,255,.1);box-shadow:0 24px 60px rgba(0,0,0,.5);text-align:center">
+    <div style="width:52px;height:52px;border-radius:50%;background:rgba(255,102,94,.12);border:1.5px solid rgba(255,102,94,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff665e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </div>
+    <div style="font-size:17px;font-weight:800;color:var(--white);margin-bottom:8px">Sign Out?</div>
+    <div style="font-size:13px;color:var(--g1);line-height:1.5;margin-bottom:24px">You will need to sign back in to access your territories and stats.</div>
+    <div style="display:flex;gap:10px">
+      <button onclick="closeSignoutModal()" style="flex:1;height:44px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:var(--white);font-size:14px;font-weight:600;cursor:pointer">Cancel</button>
+      <button onclick="confirmSignOut()" style="flex:1;height:44px;border-radius:12px;background:#ff665e;border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer">Sign Out</button>
+    </div>
+  </div>
+</div>
 <div id="toast"></div>
 
 <!-- Claim flash -->
@@ -1048,15 +1186,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
       <input id="auth-email" class="field-input" type="email" placeholder="Email address" autocomplete="email"/>
     </div>
 
-    <!-- Email verification status (shown when sign-in returns unverified) -->
-    <div id="verify-banner" style="display:none;align-items:center;gap:10px;background:rgba(255,180,0,.10);border:1px solid rgba(255,180,0,.28);border-radius:12px;padding:11px 14px;margin-bottom:2px">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0b429" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:12px;font-weight:700;color:#f0b429">Email not verified</div>
-        <div style="font-size:11px;color:#b8a070;margin-top:2px">Check your inbox or <span onclick="resendVerifyFromLogin()" style="color:#f0b429;text-decoration:underline;cursor:pointer">resend verification email</span></div>
-      </div>
-    </div>
-
     <!-- Password -->
     <div class="field-wrap">
       <div class="field-icon">
@@ -1083,9 +1212,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
     <div class="auth-switch" id="auth-switch">
       Don't have an account? <span onclick="switchAuthMode()">Sign Up</span>
     </div>
-    <div id="auth-verify-note" style="display:none;font-size:11px;color:#8fa89f;text-align:center;margin-top:4px;line-height:1.5">
-      📧 A verification link will be sent to your email
-    </div>
     <div class="auth-guest" onclick="playAsGuest()">Continue as Guest</div>
   </div>
 </div>
@@ -1093,47 +1219,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
 <!-- ============================================================
      VERIFY EMAIL SCREEN
 ============================================================ -->
-<div id="screen-verify" class="screen" style="background:var(--bg);justify-content:center;align-items:center">
-  <div style="width:100%;max-width:380px;padding:32px;text-align:center">
-
-    <!-- Animated envelope icon -->
-    <div id="verify-icon-wrap" style="width:80px;height:80px;border-radius:50%;background:rgba(184,242,74,.12);border:2px solid rgba(184,242,74,.25);display:flex;align-items:center;justify-content:center;margin:0 auto 24px">
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-    </div>
-
-    <!-- Success icon (hidden until verified) -->
-    <div id="verify-success-wrap" style="display:none;width:80px;height:80px;border-radius:50%;background:rgba(184,242,74,.18);border:2px solid var(--lime);align-items:center;justify-content:center;margin:0 auto 24px">
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-    </div>
-
-    <div class="verify-title" id="verify-title-txt">Check Your Email</div>
-    <div class="verify-sub" id="verify-sub-txt">
-      We sent a verification link to<br>
-      <span id="verify-email" style="color:var(--white);font-weight:700;word-break:break-all"></span><br>
-      <span style="color:#8fa89f">Tap the link in your email, then come back.</span>
-    </div>
-
-    <!-- Steps -->
-    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px;margin:20px 0;text-align:left">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
-        <div style="width:22px;height:22px;border-radius:50%;background:var(--lime);color:#000;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
-        <div style="font-size:12px;color:#c8d5d0">Open the email from TurfWar</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
-        <div style="width:22px;height:22px;border-radius:50%;background:var(--lime);color:#000;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
-        <div style="font-size:12px;color:#c8d5d0">Tap the verification link</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px">
-        <div style="width:22px;height:22px;border-radius:50%;background:var(--lime);color:#000;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
-        <div style="font-size:12px;color:#c8d5d0">Come back and tap Continue</div>
-      </div>
-    </div>
-
-    <div id="verify-actions" style="width:100%">
-      <button class="btn-lime" onclick="checkVerifiedAnimated()" style="margin-bottom:10px">I've Verified — Continue</button>
-      <button class="btn-ghost" onclick="resendVerify()">Resend Email</button>
-      <button class="btn-ghost" onclick="signOut()" style="margin-top:10px;color:#8fa89f">← Back to Login</button>
-    </div>
+<div id="screen-verify" class="screen" style="background:var(--bg)">
+  <div class="verify-icon" style="margin-top:80px">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+  </div>
+  <div class="verify-title">Check Your Email</div>
+  <div class="verify-sub">We sent a verification link to<br><span id="verify-email" style="color:var(--white);font-weight:700"></span><br>Click it then come back here.</div>
+  <div style="padding:0 32px;width:100%">
+    <button class="btn-lime" onclick="checkVerified()" style="margin-bottom:10px">I've Verified — Continue</button>
+    <button class="btn-ghost" onclick="resendVerify()">Resend Email</button>
+    <button class="btn-ghost" onclick="showSignoutModal()" style="margin-top:10px">Back to Login</button>
   </div>
 </div>
 
@@ -1228,7 +1323,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
 
-    <button class="map-locate" type="button" onclick="centerOn(A.map,16)" aria-label="Locate me"><svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="m21 3-7.2 3.1L10.7 3 3 10.7l7.3 3.1L13.4 21 21 13.3l-3.1-7.2L21 3Zm-8.1 8.1a1.5 1.5 0 1 1-2.1 2.1 1.5 1.5 0 0 1 2.1-2.1Z"/></svg></button>
     <div class="map-mode-title"><span id="map-ttl">TurfWar</span><div class="gps-pill"><span id="gps-dot"></span><span id="gps-lbl">GPS</span></div></div>
   </div>
   <div id="loop-toast">Loop closed — saving territory</div>
@@ -1395,7 +1489,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
       </button>
       <button class="share-action-btn" onclick="saveCard()">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Save
+        Save Image
       </button>
       <button class="share-action-btn" onclick="shareCard()">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
@@ -1404,6 +1498,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
     </div>
 
     <button class="btn-close-share" onclick="closeShareModal()">Close</button>
+  </div>
+</div>
+
+
+
+<!-- Save confirmation popup -->
+<div id="save-popup" aria-live="polite" aria-atomic="true">
+  <div class="save-popup-card">
+    <div class="save-popup-icon">
+      <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 6 9 17l-5-5"/>
+      </svg>
+    </div>
+    <div class="save-popup-title">Image Saved</div>
+    <div class="save-popup-sub" id="save-popup-sub">Saved to gallery</div>
   </div>
 </div>
 
@@ -1445,17 +1554,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
       </button>
     </div>
     <button class="btn-lime" onclick="closeNormalSummary()">Done</button>
-  </div>
-
-  <!-- Save Image popup confirmation -->
-  <div id="save-popup">
-    <div class="save-popup-inner">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#b8f24a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-      <div class="save-popup-txt">
-        <div class="save-popup-title">Saved to Gallery</div>
-        <div class="save-popup-sub">Your run card has been saved</div>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -1522,7 +1620,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
         <div class="settings-row-sub" id="settings-email">—</div>
       </div>
     </div>
-    <div class="settings-row danger" onclick="signOut()" style="cursor:pointer">
+    <div class="settings-row danger" onclick="showSignoutModal()" style="cursor:pointer">
       <div class="settings-row-icon">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       </div>
@@ -1846,11 +1944,6 @@ let isSignUp = false;
 
 function switchAuthMode() {
   isSignUp = !isSignUp;
-  // Hide verify banner when switching modes
-  const b = _('verify-banner'); if (b) b.style.display = 'none';
-  // Show/hide verification note
-  const note = _('auth-verify-note');
-  if (note) note.style.display = isSignUp ? 'block' : 'none';
   _('confirm-wrap').style.display = isSignUp ? 'block' : 'none';
   _('forgot-link').style.display  = isSignUp ? 'none'  : 'block';
   _('auth-btn').textContent = isSignUp ? 'Create Account' : 'Sign In';
@@ -1879,30 +1972,26 @@ async function submitAuth() {
       _('verify-email').textContent = email;
       showScreen('verify');
     } else {
-      const cred = await auth.signInWithEmailAndPassword(email, pass);
-      // If email not verified, show banner and stay on auth screen
-      if (cred.user && !cred.user.emailVerified) {
-        const isEmailProvider = cred.user.providerData.some(p => p.providerId === 'password');
-        if (isEmailProvider) {
-          const banner = _('verify-banner');
-          if (banner) banner.style.display = 'flex';
-          _('verify-email').textContent = email;
-          showScreen('verify');
-          resetAuthBtn(); return;
-        }
-      }
-      // onAuthStateChanged handles routing for verified users
+      await auth.signInWithEmailAndPassword(email, pass);
+      // onAuthStateChanged handles routing
     }
   } catch(e) {
+    const notFoundCodes = ['auth/user-not-found','auth/invalid-login-credentials','auth/invalid-credential'];
+    if (!isSignUp && notFoundCodes.includes(e.code)) {
+      // Auto-switch to sign-up with the email pre-filled
+      if (!isSignUp) switchAuthMode();
+      toast('No account found. Please sign up.');
+      resetAuthBtn(); return;
+    }
     const errs = {
-      'auth/user-not-found':    'No account found with this email.',
-      'auth/wrong-password':    'Incorrect password.',
-      'auth/email-already-in-use': 'Email already registered. Sign in instead.',
-      'auth/invalid-email':     'Invalid email address.',
-      'auth/too-many-requests': 'Too many attempts. Try again later.',
-      'auth/network-request-failed': 'No internet connection.'
+      'auth/wrong-password':              'Incorrect password. Try again.',
+      'auth/email-already-in-use':        'Email already registered. Sign in instead.',
+      'auth/invalid-email':               'Please enter a valid email address.',
+      'auth/too-many-requests':           'Too many attempts. Wait a moment and try again.',
+      'auth/network-request-failed':      'No internet. Check your connection.',
+      'auth/weak-password':               'Password must be at least 6 characters.',
     };
-    toast(errs[e.code] || e.message);
+    toast(errs[e.code] || 'Sign in failed. Please check your details.');
   }
   resetAuthBtn();
 }
@@ -1947,28 +2036,6 @@ async function playAsGuest() {
 }
 
 // Email verification screen actions
-async function resendVerifyFromLogin() {
-  // Called from the verification banner on the sign-in page
-  if (!auth?.currentUser) {
-    toast('Please sign in first to resend verification');
-    return;
-  }
-  try {
-    await auth.currentUser.sendEmailVerification();
-    toast('Verification email sent! Check your inbox.');
-  } catch(e) {
-    toast(e.message || 'Could not send email');
-  }
-}
-
-async function checkVerifiedAnimated() {
-  // Show loading state
-  const btn = document.querySelector('#verify-actions .btn-lime');
-  if (btn) { btn.textContent = 'Checking...'; btn.disabled = true; }
-  await checkVerified();
-  if (btn) { btn.textContent = "I've Verified — Continue"; btn.disabled = false; }
-}
-
 async function checkVerified() {
   if (!auth?.currentUser) return;
   try {
@@ -1978,18 +2045,9 @@ async function checkVerified() {
       toast('Not verified yet. Check your inbox.');
       return;
     }
-    // Show success animation briefly
-    const iconWrap = _('verify-icon-wrap');
-    const successWrap = _('verify-success-wrap');
-    const titleTxt = _('verify-title-txt');
-    if (iconWrap) iconWrap.style.display = 'none';
-    if (successWrap) { successWrap.style.display = 'flex'; }
-    if (titleTxt) titleTxt.textContent = 'Email Verified! ✓';
-    await new Promise(r => setTimeout(r, 1200));
 
-    // BUG FIX #4: authResolved and hideSplash were skipped on the verify path,
-    // causing the splash to persist or reappear when returning from email verification.
-    if (!authResolved) { authResolved = true; hideSplash(); }
+    // Do not register another auth listener here. The previous implementation
+    // added a second listener and could leave the app on the wrong screen.
     A.user.uid = user.uid;
     A.user.color = S.color || colorFor(user.uid);
     const storedName = localStorage.getItem('tw_name');
@@ -2016,11 +2074,8 @@ async function resendVerify() {
 }
 
 async function signOut() {
-  // FIX 3: Confirm before signing out
-  if (!confirm('Sign out of TurfWar?')) return;
   closeSettings();
-  // BUG FIX #5: Show auth screen immediately — don't wait for Firebase
-  showScreen('auth');
+  showScreen('auth'); // show immediately, don't wait for Firebase
   try { await auth?.signOut(); } catch(e) {}
   localStorage.removeItem('tw_name');
   Object.assign(A.user, { name:'', uid:'', color:'' });
@@ -2187,26 +2242,27 @@ function openRunPicker() { _('run-picker').classList.add('on'); }
 function closeRunPicker() { _('run-picker').classList.remove('on'); }
 
 function mapGoBack() {
-  // FIX 1: Back button on map/run screen
   if (A.tracking.on) {
     if (!confirm('Stop current run and go back?')) return;
     A.runMode === 'normal' ? stopNormalRun() : stopRun();
-  } else if (warmupTimer) {
-    stopRun();
-  }
+  } else if (warmupTimer) { stopRun(); }
   navTo('home');
 }
 
+function showSignoutModal() {
+  const m = _('signout-modal'); if (m) m.style.display = 'flex';
+}
+function closeSignoutModal() {
+  const m = _('signout-modal'); if (m) m.style.display = 'none';
+}
+async function confirmSignOut() { closeSignoutModal(); await signOut(); }
+
 function toggleTracking() {
-  if (A.tracking.on) {
-    // Active run — stop it
+  if (A.tracking.on || warmupTimer) {
+    // Stop
     A.runMode === 'normal' ? stopNormalRun() : stopRun();
-  } else if (warmupTimer) {
-    // BUG FIX #7: Was re-opening the picker during warmup countdown.
-    // Tapping again during warmup should cancel the warmup instead.
-    stopRun();
   } else {
-    // Idle — show run type picker
+    // Start — show picker if coming from map nav directly
     openRunPicker();
   }
 }
@@ -2222,6 +2278,7 @@ function togglePause() {
     _('pause-icon').innerHTML = '<polygon points="5 3 19 12 5 21 5 3" fill="white"/>';
     _('track-status').textContent = 'Paused — tap to resume';
     _('stop-btn').textContent = 'Stop Run';
+    updateRunNotif(Math.floor((Date.now() - A.tracking.t0) / 1000));
   } else {
     // Offset t0 so elapsed time doesn't count paused duration
     if (A.tracking.pauseStart) {
@@ -2233,6 +2290,7 @@ function togglePause() {
     _('track-status').textContent = A.runMode === 'turf'
       ? 'Walk a closed loop to claim territory...'
       : 'Running — good pace!';
+    updateRunNotif(Math.floor((Date.now() - A.tracking.t0) / 1000));
   }
 }
 
@@ -2243,6 +2301,9 @@ function startTurfRun() {
   _('stop-btn').textContent = 'Stop Run';
   _('track-status').textContent = 'Walk a closed loop to claim territory...';
   _('track-area-cell').style.display = '';
+  if (window.Android?.startRunNotification) {
+    window.Android.startRunNotification('Claiming Territory');
+  }
   A.tracking.tick = setInterval(tickUI, 1000);
   toast('Run started — walk your loop!');
 }
@@ -2254,18 +2315,20 @@ function startNormalRun() {
   _('stop-btn').textContent = 'Finish Run';
   _('track-status').textContent = 'Running — good pace!';
   _('track-area-cell').style.display = 'none';
+  if (window.Android?.startRunNotification) {
+    window.Android.startRunNotification('Running');
+  }
   A.tracking.tick = setInterval(tickUI, 1000);
   toast('Normal run started!');
 }
 
-function stopRun() {
+function stopRun(completedLoop = false) {
   A.tracking.on = false; A.tracking.paused = false;
   if (A.tracking.wid != null) { navigator.geolocation.clearWatch(A.tracking.wid); A.tracking.wid = null; }
   if (warmupTimer) { clearInterval(warmupTimer); warmupTimer = null; }
-  // Dismiss live run notification when run ends
-  callBridge('showNotification', ['TurfWar', 'Run complete! Check your stats.']);
   _('warmup-overlay').classList.remove('on');
   clearInterval(A.tracking.tick); A.tracking.tick = null;
+  if (window.Android?.dismissRunNotification) window.Android.dismissRunNotification();
   _('run-controls').classList.remove('on');
   _('track-btn').style.display = '';
   _('track-btn').textContent = 'Start Run';
@@ -2274,13 +2337,22 @@ function stopRun() {
   _('track-status').textContent = 'Tap Start Run to begin claiming territory';
   _('track-area-cell').style.display = '';
   setGPS(false);
-  toast('Run stopped');
+  if (completedLoop) {
+    // Internal stop after a valid closed loop — do not show an incomplete-loop message.
+  } else {
+    // Manual stop before loop closure: nothing is saved and no territory/share card is opened.
+    A.share.lastData = null;
+    toast('Loop not completed — territory was not saved');
+  }
 }
 
 function stopNormalRun() {
   A.tracking.on = false; A.tracking.paused = false;
   if (A.tracking.wid != null) { navigator.geolocation.clearWatch(A.tracking.wid); A.tracking.wid = null; }
   clearInterval(A.tracking.tick); A.tracking.tick = null;
+  // Dismiss the live timer notification
+  if (window.Android?.dismissRunNotification) window.Android.dismissRunNotification();
+  else if (window.Android?.showNotification) window.Android.showNotification('TurfWar','Run complete!');
 
   // Save path for share card BEFORE clearing
   A.share.runPath = A.tracking.path.length > 1 ? [...A.tracking.path] : null;
@@ -2293,9 +2365,6 @@ function stopNormalRun() {
   _('sum-time').textContent  = pad(Math.floor(secs/60))+':'+pad(secs%60);
   _('sum-pace').textContent  = paceFmt(dist, secs);
   _('sum-cals').textContent  = cals;
-
-  // BUG FIX #3: Persist normal run stats (was missing entirely in original)
-  saveNormalRunStats(dist, cals);
 
   _('normal-summary').classList.add('on');
 
@@ -2312,9 +2381,6 @@ function stopNormalRun() {
 }
 
 function closeNormalSummary() { _('normal-summary').classList.remove('on'); navTo('home'); }
-
-// BUG FIX #3: Original stopNormalRun() displayed the summary but never persisted stats.
-// Normal run distance/calories were lost on every session. Call updateStats here.
 async function saveNormalRunStats(dist, cals) {
   try { await updateStats(0, dist, cals); } catch(e) { console.warn('saveNormalRunStats:', e); }
 }
@@ -2422,24 +2488,27 @@ function drawNormalRunCard() {
   ctx.fillText(A.user.name || 'Runner', 28, H-6);
 }
 
+function showSavePopup(message='Saved to gallery') {
+  const popup = _('save-popup');
+  const sub = _('save-popup-sub');
+  if (!popup) return;
+  if (sub) sub.textContent = message;
+  popup.classList.add('on');
+  clearTimeout(showSavePopup.timer);
+  showSavePopup.timer = setTimeout(()=>popup.classList.remove('on'), 1800);
+}
+
 function saveNormalRunCard() {
   drawNormalRunCard();
   const b64 = _('run-card-canvas').toDataURL('image/png');
   if (window.Android?.saveImageToGallery) {
     window.Android.saveImageToGallery(b64);
-    showSavePopup();
+    showSavePopup('Saved to gallery');
   } else {
     const a = document.createElement('a');
     a.href=b64; a.download='turfwar_run_'+Date.now()+'.png'; a.click();
-    showSavePopup();
+    showSavePopup('Image downloaded');
   }
-}
-
-function showSavePopup() {
-  const popup = _('save-popup');
-  if (!popup) return;
-  popup.classList.add('on');
-  setTimeout(() => popup.classList.remove('on'), 2800);
 }
 
 function shareNormalRunCard() {
@@ -2464,16 +2533,13 @@ function onGPS(pos) {
 
   const pt = [lat, lng];
 
-  // Smoothing filter
-  // BUG FIX #8: Original code only pushed to path inside the A.tracking.last block,
-  // so the very first GPS point was NEVER recorded. Push first point unconditionally.
   if (A.tracking.last) {
     const d = distM(A.tracking.last, pt);
-    if (d < 5 || d > 100) return; // ignore jitter and GPS jumps
+    if (d < 5 || d > 100) return;
     A.tracking.dist += d;
     A.tracking.path.push(pt);
   } else {
-    A.tracking.path.push(pt); // always capture the first point
+    A.tracking.path.push(pt); // capture first point always
   }
   A.tracking.last = pt;
 
@@ -2531,25 +2597,34 @@ function tickUI() {
   _('track-time').textContent = pad(Math.floor(s/60))+':'+pad(s%60);
   _('track-dist').textContent = (A.tracking.dist/1000).toFixed(2);
   _('track-pace').textContent = paceFmt(A.tracking.dist, s);
+  // Update persistent live-run notification every second (timer style)
+  updateRunNotif(s);
+}
 
-  // Live Android notification every 10 seconds while running
-  // Shows current stats in the notification shade
-  if (s > 0 && s % 10 === 0) {
-    const km   = (A.tracking.dist / 1000).toFixed(2);
-    const time = pad(Math.floor(s/60)) + ':' + pad(s%60);
-    const pace = paceFmt(A.tracking.dist, s);
-    const mode = A.runMode === 'turf' ? 'Claiming Territory' : 'Running';
-    const body = km + ' km  •  ' + time + '  •  ' + pace + ' min/km';
-    callBridge('showNotification', [mode + ' 🏃', body]);
+function updateRunNotif(s) {
+  if (!window.Android) return;
+  const km   = (A.tracking.dist / 1000).toFixed(2);
+  const time = pad(Math.floor(s/60)) + ':' + pad(s%60);
+  const pace = (A.tracking.dist > 50) ? paceFmt(A.tracking.dist, s) + ' min/km' : '--';
+  const mode = A.runMode === 'turf' ? 'Claiming Territory' : 'Running';
+  const body = time + '   ' + km + ' km   ' + pace;
+  // Use the fixed-ID foreground-service notification (no stacking).
+  // Signature matches TurfWarBridge.updateRunNotification(...).
+  if (window.Android.updateRunNotification) {
+    window.Android.updateRunNotification(
+      mode,
+      String(s),
+      String(A.tracking.dist),
+      A.tracking.paused ? 'true' : 'false'
+    );
   }
 }
 
+
 function paceFmt(distM, secs) {
-  // BUG FIX #9: Standardised no-data string to '--:--' everywhere.
-  // Original had '--:--' here but '—:——' (em-dashes) in HTML initial values — inconsistent.
   if (!distM || distM < 50) return '--:--';
   const spk = secs / (distM / 1000);
-  return pad(Math.floor(spk / 60)) + ':' + pad(Math.floor(spk % 60));
+  return pad(Math.floor(spk/60)) + ':' + pad(Math.floor(spk%60));
 }
 
 /* ================================================================
@@ -2559,7 +2634,7 @@ async function onLoopClosed() {
   const path     = [...A.tracking.path];
   const dist     = A.tracking.dist;
   const duration = Date.now() - A.tracking.t0;
-  stopRun();
+  stopRun(true);
 
   // Flash loop toast
   const lt = _('loop-toast');
@@ -2739,10 +2814,7 @@ async function renderTerr() {
   A.territories = list;
   try { localStorage.setItem('tw_cache', JSON.stringify(list)); } catch(e) {}
   drawOnMap(A.map, list, A.ly.terr, true);
-  // BUG FIX #6: A.miniMap is always null — the mini-map element was removed in the
-  // Home screen redesign. drawOnMap(A.miniMap,...) was a no-op but still triggered
-  // the geolocation call in renderTerr() unnecessarily on every Home load.
-  // Removed the dead drawOnMap(A.miniMap,...) call.
+  drawOnMap(A.miniMap, list, null, false);
 }
 
 function drawOnMap(map, list, store, labels) {
@@ -2880,8 +2952,32 @@ async function onLeaderboard() {
   }catch(e){el.innerHTML='<div class="empty"><div class="empty-txt">Could not load leaderboard</div></div>';}
 }
 
-// BUG FIX #1: loadMiniLB() referenced element 'home-lb' which does not exist
-// in the HTML. It was also never called anywhere. Removed to prevent silent crashes.
+// BUG FIX #1: loadMiniLB removed — referenced non-existent 'home-lb' element
+async function loadMiniLB_REMOVED() {
+  const el=_('home-lb');
+  if(!db)return;
+  try{
+    const snap=await db.collection('users').orderBy('totalArea','desc').limit(3).get();
+    if(snap.empty){el.innerHTML='<div class="empty"><div class="empty-txt">Be the first warrior!</div></div>';return;}
+    let i=0,html='';
+    const pos=['1','2','3'];
+    snap.forEach(doc=>{
+      const d=doc.data(),me=(doc.id===A.user.uid);
+      const clr=d.color||colorFor(doc.id);
+      html+=`<div class="lb-row">
+        <div class="lb-pos">${pos[i]}</div>
+        <div class="lb-av" style="background:${clr}">${(d.name||'?').charAt(0).toUpperCase()}</div>
+        <div style="flex:1;min-width:0">
+          <div class="lb-name">${d.name||'?'}${me?' (You)':''}</div>
+          <div class="lb-zones">${d.territoriesCount||0} zones</div>
+        </div>
+        <div class="lb-area-val">${fmt(d.totalArea||0)}m²</div>
+      </div>`;
+      i++;
+    });
+    el.innerHTML=html;
+  }catch(e){}
+}
 
 /* ================================================================
    SHARE CARD
@@ -2897,10 +2993,8 @@ function closeShareModal() { _('share-modal').classList.remove('on'); }
 function goCard(idx) {
   A.share.currentCard = idx;
   _('card-track').style.transform = `translateX(${-idx*100}%)`;
-  // BUG FIX #13: Was hardcoded to [0,1] — now driven by actual dot count
-  // so adding more cards in future won't silently break dot updates.
-  document.querySelectorAll('.c-dot').forEach((dot, i) => {
-    dot.classList.toggle('on', i === idx);
+  document.querySelectorAll('.c-dot').forEach((dot,i)=>{
+    dot.classList.toggle('on', i===idx);
   });
 }
 
@@ -2957,7 +3051,6 @@ function drawStatsContent(ctx, W, H, d) {
   // App name
   ctx.fillStyle = '#C5F135';
   ctx.font = 'bold 18px -apple-system,sans-serif';
-  // BUG FIX #11: ctx.letterSpacing removed — not a valid Canvas 2D API (CSS-only).
   ctx.fillText('TURFWAR', 32, 52);
 
   // Big area number (center)
@@ -3017,9 +3110,16 @@ function drawMapCard(d, canvas) {
   const W = canvas.width, H = canvas.height;
 
   // Background
-  // BUG FIX #12: Original code defined a bg() closure but never called it in the
-  // non-customBg branch. The canvas got filled black only by accident because
-  // drawMapContent ran after the uncalled bg(). Removed dead closure; inlined fill.
+  const bg = () => {
+    if (A.share.customBg) {
+      // handled after image loads
+    } else {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0,0,W,H);
+    }
+    drawMapContent(ctx, W, H, d);
+  };
+
   if (A.share.customBg) {
     const img = new Image();
     img.onload = () => {
@@ -3044,7 +3144,7 @@ function drawMapContent(ctx, W, H, d) {
   // App name
   ctx.fillStyle='#C5F135';
   ctx.font='bold 18px -apple-system,sans-serif';
-  ctx.textAlign='left'; // letterSpacing removed (BUG FIX #11)
+  ctx.letterSpacing='4px'; ctx.textAlign='left';
   ctx.fillText('TURFWAR', 32, 52);
 
   // Draw territory polygon (centered in card)
@@ -3089,7 +3189,7 @@ function drawMapContent(ctx, W, H, d) {
   ctx.fillStyle='#333';
   ctx.font='600 13px -apple-system,sans-serif';
   ctx.fillText(A.user.name, W/2, H-36);
-  ctx.textAlign='left'; // letterSpacing removed (BUG FIX #11)
+  ctx.textAlign='left'; ctx.letterSpacing='0px';
 }
 
 function onBgPicked(e) {
@@ -3109,12 +3209,12 @@ function saveCard() {
   const b64    = canvas.toDataURL('image/png');
   if (window.Android?.saveImageToGallery) {
     window.Android.saveImageToGallery(b64);
-    toast('Saved to gallery!');
+    showSavePopup('Saved to gallery');
   } else {
     // Web fallback — download link
     const a=document.createElement('a');
     a.href=b64; a.download='turfwar_'+Date.now()+'.png'; a.click();
-    toast('Saved!');
+    showSavePopup('Image downloaded');
   }
 }
 
@@ -3185,15 +3285,6 @@ async function syncQueue(){
   let done=0;
   for(const d of q){
     try{
-      // BUG FIX #10: If the user signed out and back in under a different account,
-      // the queued item has a stale uid. Update it to the current user before syncing
-      // so territories are attributed to the correct account.
-      if (A.user.uid && d.uid !== A.user.uid) {
-        d.uid = A.user.uid;
-        d.owner = A.user.name;
-        d.color = A.user.color;
-        d.deviceId = A.user.uid;
-      }
       const poly=turf.polygon([d.coordinates]);
       await claimTerritory(d,poly);
       await updateStats(d.area||0,d.distance||0,d.calories||0);
@@ -3272,27 +3363,26 @@ window.addEventListener('offline',()=>toast('Offline — saving locally'));
    BOOT
 ================================================================ */
 window.addEventListener('load',()=>{
+  // Safety net: if Firebase/auth is slow, force show auth after 8s
   const emergency=setTimeout(()=>{
-    // BUG FIX #14: Guard against race where signOut() already showed 'auth' but
-    // also reset authResolved=false, causing the emergency timeout to fire again
-    // and re-show auth over any screen the user has navigated to.
     if(!authResolved){
       authResolved=true;
       hideSplash();
-      // Only redirect to auth if no screen is currently active
-      const anyActive = document.querySelector('.screen.active');
-      if (!anyActive) showScreen('auth');
+      const anyActive=document.querySelector('.screen.active');
+      if(!anyActive) showScreen('auth');
     }
-  },6000);
+  },8000);
+  // Absolute hard stop at 15s no matter what
+  setTimeout(()=>{ if(!authResolved){authResolved=true;hideSplash();showScreen('auth');} },15000);
 
   boot()
-    .then(()=>clearTimeout(emergency))
     .catch(err=>{
       console.error('Boot failed:',err);
       clearTimeout(emergency);
       hideSplash();
       showScreen('auth');
     });
+  // Do NOT clear emergency on boot success — keep as safety net for slow onAuthStateChanged
 });
 </script>
 </body>

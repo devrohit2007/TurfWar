@@ -80,11 +80,10 @@ public class LocationCheckService extends Service {
 
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {         // API 29+
-                // DATA_SYNC doesn't need the location permission
                 startForeground(FG_NOTIF_ID, notif,
-                        ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);     // matches manifest
             } else {
-                startForeground(FG_NOTIF_ID, notif);                       // API 8–28
+                startForeground(FG_NOTIF_ID, notif);                       // API 28 — no type needed
             }
         } catch (SecurityException e) {
             // Fallback if permission not granted yet
